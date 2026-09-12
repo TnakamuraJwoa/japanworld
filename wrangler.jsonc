@@ -1,0 +1,38 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "japanworld-site",
+  "main": "worker/index.ts",
+  "compatibility_date": "2025-04-01",
+
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // Worker 側で末尾スラッシュの正規化と 404 を扱うため、
+    // アセット層では自動リダイレクトを行わせない。
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none",
+    // すべてのリクエストを Worker に通す（apex→www・旧URL 301 のため）
+    "run_worker_first": true
+  },
+
+  "observability": {
+    "enabled": true
+  },
+
+  // ------------------------------------------------------------------
+  // 本番ドメインの割り当て。
+  //
+  // ⚠ 有効にしたまま deploy すると、Cloudflare が該当ゾーンに
+  //   DNS レコードを自動作成します。
+  //   DNS を Cloudflare へ移行し、docs/06-dns-migration.md の
+  //   「移行前に必ず登録するレコード」（特に MX: mx.hetemail.jp と
+  //   jwcc / nft のサブドメイン）を登録し終えてから、
+  //   下のコメントを外してください。
+  // ------------------------------------------------------------------
+  // "routes": [
+  //   { "pattern": "www.japanworld.co.jp", "custom_domain": true },
+  //   { "pattern": "japanworld.co.jp", "custom_domain": true }
+  // ],
+
+  "workers_dev": true
+}

@@ -1,0 +1,137 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import {
+  SITE,
+  LANGS,
+  LANG_META,
+  COMPANY_I18N,
+  pathFor,
+  type Lang,
+  type RouteKey,
+} from '../data/site';
+import { getDict } from '../i18n';
+import { IMAGES, type ImageName } from '../data/images.generated';
+
+interface Props {
+  lang: Lang;
+  route: RouteKey;
+  title: string;
+  description: string;
+  /** OGP 画像。ページごとに変える */
+  ogImage?: ImageName;
+  /** LCP 画像を preload する場合の名前と sizes */
+  preloadImage?: { name: ImageName; sizes: string };
+  /** 追加の JSON-LD */
+  jsonLd?: unknown[];
+  noindex?: boolean;
+}
+
+const {
+  lang,
+  route,
+  title,
+  description,
+  ogImage = 'hotel/exterior',
+  preloadImage,
+  jsonLd = [],
+  noindex = false,
+} = Astro.props;
+
+const t = getDict(lang);
+const meta = LANG_META[lang];
+
+const path = pathFor(lang, route);
+const canonical = new URL(path, SITE.origin).href;
+// サイト名は言語に合わせる（現行サイトは全言語で日本語の社名だった）
+const siteName = COMPANY_I18N[lang].name;
+const fullTitle = `${title} | ${siteName}`;
+
+const og = IMAGES[ogImage];
+const ogUrl = new URL(`/images/${ogImage}-${og.widths[og.widths.length - 1]}.webp`, SITE.origin).href;
+
+const preload = preloadImage
+  ? {
+      srcset: IMAGES[preloadImage.name].widths
+        .map((w: number) => `/images/${preloadImage.name}-${w}.webp ${w}w`)
+        .join(', '),
+      href: `/images/${preloadImage.name}-${IMAGES[preloadImage.name].widths[0]}.webp`,
+      sizes: preloadImage.sizes,
+    }
+  : null;
+---
+
+<!doctype html>
+<html lang={meta.htmlLang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+
+    {
+      LANGS.map((l) => (
+        <link
+          rel="alternate"
+          hreflang={LANG_META[l].hreflang}
+          href={new URL(pathFor(l, route), SITE.origin).href}
+        />
+      ))
+    }
+    <link rel="alternate" hreflang="x-default" href={new URL(pathFor('ja', route), SITE.origin).href} />
+
+    <meta property="og:type" content={route === 'home' ? 'website' : 'article'} />
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:locale" content={meta.ogLocale} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogUrl} />
+    <meta property="og:image:width" content={String(og.width)} />
+    <meta property="og:image:height" content={String(og.height)} />
+    <meta property="og:image:alt" content={og.alt} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogUrl} />
+
+    <meta name="theme-color" content="#062f4a" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    {
+      preload && (
+        <link
+          rel="preload"
+          as="image"
+          href={preload.href}
+          imagesrcset={preload.srcset}
+          imagesizes={preload.sizes}
+          fetchpriority="high"
+        />
+      )
+    }
+
+    {
+      jsonLd.map((data) => (
+        <script type="application/ld+json" is:inline set:html={JSON.stringify(data)} />
+      ))
+    }
+  </head>
+
+  <body id="top">
+    <a class="skip" href="#main">{t.ui.skipToContent}</a>
+    <Header lang={lang} t={t} current={route} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer lang={lang} t={t} />
+  </body>
+</html>

@@ -1,0 +1,106 @@
+---
+import Base from '../layouts/Base.astro';
+import { pathFor, MAIN_NAV, LANGS, LANG_META } from '../data/site';
+import { getDict } from '../i18n';
+
+// 404 は言語を判定できないため日本語を既定にし、
+// 他言語のトップへの導線を併記する。
+const lang = 'ja' as const;
+const t = getDict(lang);
+---
+
+<Base
+  lang={lang}
+  route="home"
+  title={t.ui.notFoundTitle}
+  description={t.ui.notFoundLead}
+  noindex
+>
+  <section class="section nf">
+    <div class="wrap-narrow">
+      <p class="eyebrow">404</p>
+      <h1 class="nf__title">{t.ui.notFoundTitle}</h1>
+      <hr class="rule" />
+      <p class="nf__lead">{t.ui.notFoundLead}</p>
+      <p class="nf__en">
+        The page you are looking for could not be found. It may have been moved or removed.
+      </p>
+
+      <ul class="nf__nav">
+        <li><a href={pathFor(lang, 'home')}>{t.ui.breadcrumbHome}</a></li>
+        {
+          MAIN_NAV.map((key) => (
+            <li>
+              <a href={pathFor(lang, key)}>{t.nav[key]}</a>
+            </li>
+          ))
+        }
+      </ul>
+
+      <h2 class="nf__sub">Other languages</h2>
+      <ul class="nf__langs">
+        {
+          LANGS.filter((l) => l !== 'ja').map((l) => (
+            <li>
+              <a href={pathFor(l, 'home')} hreflang={LANG_META[l].hreflang} lang={LANG_META[l].htmlLang}>
+                {LANG_META[l].label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+
+      <p class="btn-row nf__btns">
+        <a class="btn btn--primary" href={pathFor(lang, 'home')}>{t.ui.notFoundBack}</a>
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .nf {
+    padding-block: clamp(3.5rem, 10vw, 7rem);
+  }
+
+  .nf__title {
+    font-size: var(--step-4);
+  }
+
+  .nf__lead {
+    margin-top: 1.25rem;
+    font-size: var(--step-1);
+  }
+
+  .nf__en {
+    margin-top: 0.75rem;
+    color: var(--ink-50);
+    font-size: var(--step--1);
+  }
+
+  .nf__nav,
+  .nf__langs {
+    list-style: none;
+    padding: 0;
+    margin: 1.75rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.5rem;
+  }
+
+  .nf__nav a,
+  .nf__langs a {
+    display: inline-block;
+    min-height: 44px;
+    line-height: 44px;
+    font-weight: 600;
+  }
+
+  .nf__sub {
+    margin-top: 2.5rem;
+    font-size: var(--step-1);
+  }
+
+  .nf__btns {
+    margin-top: 2.5rem;
+  }
+</style>

@@ -1,0 +1,55 @@
+---
+/**
+ * public/images/ に生成済みの WebP を <img srcset> で出力する。
+ *
+ * - width / height を必ず出すので CLS が起きない
+ * - 既定の alt は scripts/image-manifest.mjs に書いた日本語
+ *   （ページ固有の文脈がある場合だけ alt を上書きする）
+ * - priority を渡したものだけ eager + fetchpriority=high（＝LCP画像）
+ */
+import { IMAGES, type ImageName } from '../data/images.generated';
+
+interface Props {
+  name: ImageName;
+  /** 既定の alt を上書きしたいとき。装飾目的なら alt="" を明示する */
+  alt?: string;
+  /** レイアウト上の表示幅（sizes 属性） */
+  sizes?: string;
+  priority?: boolean;
+  class?: string;
+  /** object-fit: cover を効かせるために縦横比を固定したいとき */
+  ratio?: string;
+  loading?: 'lazy' | 'eager';
+}
+
+const {
+  name,
+  alt,
+  sizes = '100vw',
+  priority = false,
+  class: className,
+  ratio,
+  loading,
+} = Astro.props;
+
+const img = IMAGES[name];
+if (!img) throw new Error(`Picture: 未知の画像名 "${name}"`);
+
+const srcset = img.widths.map((w: number) => `/images/${name}-${w}.webp ${w}w`).join(', ');
+const fallback = `/images/${name}-${img.widths[img.widths.length - 1]}.webp`;
+const altText = alt ?? img.alt;
+---
+
+<img
+  src={fallback}
+  srcset={srcset}
+  sizes={sizes}
+  width={img.width}
+  height={img.height}
+  alt={altText}
+  class={className}
+  style={ratio ? `aspect-ratio:${ratio};object-fit:cover;width:100%;height:auto` : undefined}
+  loading={loading ?? (priority ? 'eager' : 'lazy')}
+  decoding={priority ? 'sync' : 'async'}
+  fetchpriority={priority ? 'high' : undefined}
+/>

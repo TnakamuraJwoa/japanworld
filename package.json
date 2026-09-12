@@ -1,0 +1,30 @@
+{
+  "name": "japanworld-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "wrangler dev",
+    "check": "astro check",
+    "images": "node scripts/build-images.mjs",
+    "verify": "node scripts/check-all.mjs",
+    "deploy": "wrangler deploy",
+    "verify:redirects": "node --experimental-strip-types --no-warnings scripts/check-redirects.mjs",
+    "verify:overflow": "node scripts/check-overflow.mjs",
+    "shots": "node scripts/shots.mjs"
+  },
+  "dependencies": {
+    "astro": "^5.6.1",
+    "sharp": "^0.34.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.14.4"
+  }
+}

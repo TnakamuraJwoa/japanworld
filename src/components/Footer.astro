@@ -1,0 +1,230 @@
+---
+import {
+  pathFor,
+  MAIN_NAV,
+  HOTEL_SECTION,
+  COMPANY,
+  COMPANY_I18N,
+  HOTEL,
+  HOTEL_ADDRESS_I18N,
+  SITE,
+  EXTERNAL,
+  FEATURES,
+  type Lang,
+} from '../data/site';
+import type { Dict } from '../i18n/types';
+
+interface Props {
+  lang: Lang;
+  t: Dict;
+}
+const { lang, t } = Astro.props;
+
+const c = COMPANY_I18N[lang];
+const hotelAddress = HOTEL_ADDRESS_I18N[lang];
+
+const year = new Date().getFullYear();
+const copyright =
+  year > SITE.copyrightYear ? `${SITE.copyrightYear}–${year}` : `${SITE.copyrightYear}`;
+---
+
+<footer class="site-footer">
+  <div class="wrap site-footer__grid">
+    <section class="site-footer__col">
+      <h2 class="site-footer__h">{t.footer.hotelHeading}</h2>
+      <address>
+        〒{HOTEL.postal}<br />
+        {hotelAddress}
+      </address>
+      <p class="site-footer__tel">
+        <a href={`tel:${HOTEL.telHref}`}>TEL {HOTEL.tel}</a>
+        <span class="site-footer__hours">{t.ui.telHoursLabel} {HOTEL.telHours}</span>
+      </p>
+      <p class="site-footer__fax">FAX {HOTEL.fax}</p>
+      <ul class="site-footer__links">
+        {
+          HOTEL_SECTION.map((key) => (
+            <li>
+              <a href={pathFor(lang, key)}>{t.nav[key]}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section class="site-footer__col">
+      <h2 class="site-footer__h">{t.footer.companyHeading}</h2>
+      <address>
+        〒{COMPANY.postal}<br />
+        {c.address}
+      </address>
+      <p class="site-footer__tel">
+        <a href={`tel:${COMPANY.telHref}`}>TEL {COMPANY.tel}</a>
+      </p>
+      <ul class="site-footer__links">
+        {
+          MAIN_NAV.map((key) => (
+            <li>
+              <a href={pathFor(lang, key)}>{t.nav[key]}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section class="site-footer__col">
+      <h2 class="site-footer__h">{t.footer.linksHeading}</h2>
+      <p class="site-footer__note">{t.footer.externalNote}</p>
+      <ul class="site-footer__links site-footer__links--ext">
+        <li>
+          <a class="ext" href={EXTERNAL.hotelSite} target="_blank" rel="noopener">
+            {t.footer.hotelSiteLabel}
+          </a>
+        </li>
+        <li>
+          <a class="ext" href={EXTERNAL.members} target="_blank" rel="noopener">
+            {t.footer.membersLabel}
+          </a>
+        </li>
+        {
+          /* JW NFT Platform は TLS 証明書失効のため非表示。src/data/site.ts の FEATURES を参照 */
+          FEATURES.nftLink && (
+            <li>
+              <a class="ext" href={EXTERNAL.nft} target="_blank" rel="noopener">
+                {t.footer.nftLabel}
+              </a>
+            </li>
+          )
+        }
+        <li>
+          <a class="ext" href={EXTERNAL.busTimetable} target="_blank" rel="noopener">
+            {t.footer.busTimetableLabel}
+          </a>
+        </li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="wrap site-footer__bottom">
+    <p class="small">&copy; {copyright} {c.name}</p>
+    <a class="site-footer__top" href="#top">{t.ui.pageTop} ↑</a>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--ai-900);
+    color: #d5dfe7;
+    padding-block: clamp(2.5rem, 6vw, 4rem) 1.5rem;
+    font-size: var(--step--1);
+    line-height: 1.9;
+  }
+
+  .site-footer__grid {
+    display: grid;
+    gap: clamp(2rem, 5vw, 3rem);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  }
+
+  .site-footer__h {
+    font-size: 0.9375rem;
+    color: #fff;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.9rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  .site-footer address {
+    font-style: normal;
+    color: #b9c8d4;
+  }
+
+  .site-footer__tel {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.9rem;
+    align-items: baseline;
+  }
+
+  .site-footer__tel a {
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    display: inline-block;
+    min-height: 32px;
+  }
+
+  .site-footer__tel a:hover {
+    text-decoration: underline;
+  }
+
+  .site-footer__hours {
+    color: #9db0c0;
+    font-size: 0.75rem;
+  }
+
+  .site-footer__fax {
+    color: #9db0c0;
+    font-size: 0.75rem;
+    margin-top: 0.15rem;
+  }
+
+  .site-footer__note {
+    color: #9db0c0;
+    font-size: 0.75rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .site-footer__links {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0;
+    display: grid;
+    gap: 0.1rem;
+  }
+
+  .site-footer__links a {
+    color: #c9d7e1;
+    text-decoration: none;
+    display: inline-block;
+    padding-block: 0.4rem;
+    min-height: 36px;
+  }
+
+  .site-footer__links a:hover {
+    color: #fff;
+    text-decoration: underline;
+  }
+
+  .site-footer__links--ext a {
+    line-height: 1.5;
+  }
+
+  .site-footer__bottom {
+    margin-top: clamp(2rem, 5vw, 3rem);
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    align-items: center;
+    justify-content: space-between;
+    color: #8fa3b4;
+  }
+
+  .site-footer__bottom p {
+    margin: 0;
+  }
+
+  .site-footer__top {
+    color: #c9d7e1;
+    text-decoration: none;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+  }
+</style>

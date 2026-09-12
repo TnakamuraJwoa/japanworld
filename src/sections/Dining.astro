@@ -1,0 +1,205 @@
+---
+import PageHero from '../components/PageHero.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import Picture from '../components/Picture.astro';
+import type { Lang } from '../data/site';
+import type { Dict } from '../i18n/types';
+import type { ImageName } from '../data/images.generated';
+
+interface Props {
+  lang: Lang;
+  t: Dict;
+}
+const { lang, t } = Astro.props;
+const p = t.pages.dining;
+
+const courseImages: ImageName[] = ['dining/course-seseragi', 'dining/course-unkai'];
+const anniversaryImages: ImageName[] = ['dining/message-plate', 'dining/cake', 'dining/bouquet'];
+---
+
+<PageHero eyebrow={p.eyebrow} title={p.h1} lead={p.lead} image="dining/restaurant-raki" />
+<Breadcrumbs lang={lang} t={t} trail={['hotel', 'dining']} />
+
+<section class="section section--tight">
+  <div class="wrap-narrow stack">
+    {p.introBody.map((x, i) => <p class={i === 0 ? 'h-lead' : undefined}>{x}</p>)}
+  </div>
+</section>
+
+<!-- レストラン -->
+<section class="section section--paper">
+  <div class="wrap split">
+    <div class="split__text">
+      <p class="eyebrow">Restaurant</p>
+      <h2 class="section-title">{p.restaurantName}</h2>
+      <hr class="rule" />
+      <p>{p.restaurantBody}</p>
+      <dl class="dl">
+        {
+          p.restaurantRows.map(([k, v]) => (
+            <div class="dl__row">
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+    <figure class="figure">
+      <Picture name="dining/restaurant-table" sizes="(min-width: 860px) 46vw, 92vw" ratio="4/3" />
+    </figure>
+  </div>
+</section>
+
+<!-- ご夕食 -->
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">Dinner</p>
+    <h2 class="section-title">{p.dinnerHeading}</h2>
+    <hr class="rule" />
+    <div class="grid grid--2 courses">
+      {
+        p.courses.map((c, i) => (
+          <article class="card">
+            <div class="card__media">
+              <Picture name={courseImages[i]} sizes="(min-width: 860px) 46vw, 92vw" />
+            </div>
+            <div class="card__body">
+              <h3 class="card__title">{c.title}</h3>
+              <p class="card__text">{c.body}</p>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+    <p class="notes courseNote"><span>{p.note}</span></p>
+  </div>
+</section>
+
+<!-- ご朝食・お子様料理 -->
+<section class="section section--paper">
+  <div class="wrap grid grid--2">
+    <article class="card">
+      <div class="card__media">
+        <Picture name="dining/breakfast-plate" sizes="(min-width: 860px) 46vw, 92vw" />
+      </div>
+      <div class="card__body">
+        <p class="eyebrow">Breakfast</p>
+        <h2 class="card__title">{p.breakfastHeading}</h2>
+        <p class="card__text">{p.breakfastBody}</p>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card__media">
+        <Picture name="dining/kids-plate" sizes="(min-width: 860px) 46vw, 92vw" />
+      </div>
+      <div class="card__body">
+        <p class="eyebrow">For children</p>
+        <h2 class="card__title">{p.kidsHeading}</h2>
+        <p class="card__text">{p.kidsBody}</p>
+        <dl class="dl dl--compact">
+          {
+            p.kidsRows.map(([k, v]) => (
+              <div class="dl__row">
+                <dt>{k}</dt>
+                <dd>{v}</dd>
+              </div>
+            ))
+          }
+        </dl>
+        <p class="notes"><span>{p.kidsNote}</span></p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- 記念日・お祝い -->
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">Anniversary</p>
+    <h2 class="section-title">{p.anniversaryHeading}</h2>
+    <hr class="rule" />
+    <div class="grid grid--3 anniv">
+      {
+        p.anniversary.map((a, i) => (
+          <article class="card">
+            <div class="card__media">
+              <Picture
+                name={anniversaryImages[i]}
+                sizes="(min-width: 1000px) 33vw, (min-width: 640px) 48vw, 92vw"
+              />
+            </div>
+            <div class="card__body">
+              <h3 class="card__title">{a.title}</h3>
+              <p class="card__text">{a.body}</p>
+              <p class="anniv__price">{a.price}</p>
+              <p class="anniv__reserve">{a.reserve}</p>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+    <ul class="notes annivNotes">
+      {p.anniversaryNotes.map((x) => <li>{x}</li>)}
+    </ul>
+  </div>
+</section>
+
+<!-- バー -->
+<section class="section section--paper">
+  <div class="wrap split split--reverse">
+    <div class="split__text">
+      <p class="eyebrow">Bar</p>
+      <h2 class="section-title">{p.barName}</h2>
+      <hr class="rule" />
+      <p>{p.barBody}</p>
+      <dl class="dl">
+        {
+          p.barRows.map(([k, v]) => (
+            <div class="dl__row">
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+    <figure class="figure">
+      <Picture name="dining/bar" sizes="(min-width: 860px) 46vw, 92vw" ratio="16/9" />
+    </figure>
+  </div>
+</section>
+
+<style>
+  .courses,
+  .anniv {
+    margin-top: 2.25rem;
+  }
+
+  .courseNote,
+  .annivNotes {
+    margin-top: 1.5rem;
+  }
+
+  .dl--compact {
+    margin-top: 0.5rem;
+  }
+
+  .dl--compact :global(.dl__row) {
+    padding-block: 0.55rem;
+  }
+
+  .anniv__price {
+    font-family: var(--serif);
+    font-size: var(--step-1);
+    color: var(--ai-800);
+    margin-top: auto;
+    padding-top: 0.4rem;
+  }
+
+  .anniv__reserve {
+    font-size: var(--step--1);
+    color: var(--ink-50);
+  }
+</style>

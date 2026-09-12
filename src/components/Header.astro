@@ -1,0 +1,500 @@
+---
+import { pathFor, MAIN_NAV, HOTEL_SECTION, LANGS, LANG_META, type Lang, type RouteKey } from '../data/site';
+import { EXTERNAL } from '../data/site';
+import type { Dict } from '../i18n/types';
+
+interface Props {
+  lang: Lang;
+  t: Dict;
+  current: RouteKey;
+}
+const { lang, t, current } = Astro.props;
+
+const inHotelSection = HOTEL_SECTION.includes(current);
+const homeHref = pathFor(lang, 'home');
+---
+
+<header class="site-header">
+  <div class="wrap site-header__bar">
+    <a class="brand" href={homeHref}>
+      <span class="brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 64 40" width="40" height="25" focusable="false">
+          <path
+            d="M2 6 L16 34 L32 12 L48 34 L62 6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="7"
+            stroke-linejoin="miter"
+          ></path>
+        </svg>
+      </span>
+      <span class="brand__text">
+        <span class="brand__name">Japan World</span>
+        <span class="brand__sub">{t.ui.brandSub}</span>
+      </span>
+    </a>
+
+    <button
+      class="navToggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="site-nav"
+      data-nav-toggle
+    >
+      <span class="navToggle__bars" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span class="navToggle__label">{t.ui.menu}</span>
+    </button>
+
+    <nav class="site-nav" id="site-nav" aria-label={t.ui.menu} data-nav>
+      <ul class="site-nav__list">
+        {
+          MAIN_NAV.map((key) => (
+            <li>
+              <a
+                href={pathFor(lang, key)}
+                aria-current={key === current || (key === 'hotel' && inHotelSection) ? 'page' : undefined}
+              >
+                {t.nav[key]}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+
+      <div class="site-nav__cta">
+        <a class="btn btn--primary btn--sm" href={pathFor(lang, 'booking')}>{t.ui.ctaBook}</a>
+        <a
+          class="btn btn--ghost btn--sm ext"
+          href={EXTERNAL.members}
+          target="_blank"
+          rel="noopener">{t.ui.ctaMembers}</a
+        >
+      </div>
+
+      <div class="langs" aria-label={t.ui.languageLabel}>
+        <span class="langs__label">{t.ui.languageLabel}</span>
+        <ul>
+          {
+            LANGS.map((l) => (
+              <li>
+                <a
+                  href={pathFor(l, current)}
+                  hreflang={LANG_META[l].hreflang}
+                  lang={LANG_META[l].htmlLang}
+                  aria-current={l === lang ? 'true' : undefined}
+                >
+                  {LANG_META[l].label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </nav>
+  </div>
+
+  <!-- 施設ページ（客室・温泉・ダイニング・宴会場・スパ＆サロン・那須高原）は
+       どのページからも辿れるよう、第2段のナビを常時表示する。 -->
+  <nav class="subnav" aria-label={t.nav.hotel}>
+    <div class="wrap subnav__inner scroll-x">
+      <ul>
+        {HOTEL_SECTION.map((key) => (
+          <li>
+            <a href={pathFor(lang, key)} aria-current={key === current ? 'page' : undefined}>
+              {t.nav[key]}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </nav>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(251, 249, 245, 0.96);
+    border-bottom: 1px solid var(--line-soft);
+    backdrop-filter: saturate(140%) blur(8px);
+  }
+
+  .site-header__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 66px;
+    padding-block: 0.5rem;
+  }
+
+  /* ---- ブランド ---- */
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    text-decoration: none;
+    color: var(--ink);
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .brand__mark {
+    color: var(--ai-700);
+    display: inline-flex;
+    flex: none;
+  }
+
+  .brand__text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+    min-width: 0;
+  }
+
+  .brand__name {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .brand__sub {
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+    color: var(--ink-50);
+    white-space: nowrap;
+  }
+
+  /* 狭い画面ではブランド名だけに絞る（ロゴの折返しを防ぐ） */
+  @media (max-width: 420px) {
+    .brand__sub {
+      font-size: 0.625rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 11rem;
+    }
+  }
+
+  /* ---- トグル ---- */
+  .navToggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.4rem 0.7rem;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    font: inherit;
+    font-size: 0.8125rem;
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  .navToggle__bars {
+    display: grid;
+    gap: 4px;
+    width: 18px;
+  }
+
+  .navToggle__bars span {
+    display: block;
+    height: 2px;
+    background: currentColor;
+    border-radius: 1px;
+  }
+
+  /* ---- ナビ ---- */
+  .site-nav {
+    display: none;
+  }
+
+  .site-nav[data-open] {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    padding: 1rem var(--gutter) 1.75rem;
+    max-height: calc(100dvh - 66px);
+    overflow-y: auto;
+  }
+
+  .site-nav__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+  }
+
+  .site-nav__list a {
+    display: block;
+    padding: 0.85rem 0.25rem;
+    text-decoration: none;
+    color: var(--ink);
+    font-weight: 600;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .site-nav__list a[aria-current] {
+    color: var(--ai-700);
+  }
+
+  .site-nav__cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1.1rem;
+  }
+
+  .btn--sm {
+    min-height: 44px;
+    padding: 0.55rem 1.1rem;
+    font-size: 0.875rem;
+  }
+
+  .langs {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .langs__label {
+    display: block;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-50);
+    margin-bottom: 0.5rem;
+  }
+
+  .langs ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.1rem;
+  }
+
+  .langs a {
+    display: inline-block;
+    min-height: 40px;
+    line-height: 40px;
+    font-size: 0.875rem;
+    text-decoration: none;
+    color: var(--ink-70);
+  }
+
+  .langs a[aria-current] {
+    color: var(--ai-700);
+    font-weight: 700;
+  }
+
+  /* ---- サブナビ ---- */
+  .subnav {
+    position: relative;
+    border-top: 1px solid var(--line-soft);
+    background: var(--white);
+  }
+
+  /* 項目が入りきらない幅では右端をぼかし、横スクロールできることを示す */
+  @media (max-width: 899px) {
+    .subnav::after {
+      content: '';
+      position: absolute;
+      inset-block: 0;
+      right: 0;
+      width: 2.5rem;
+      background: linear-gradient(to right, rgba(255, 255, 255, 0), var(--white));
+      pointer-events: none;
+    }
+  }
+
+  .subnav__inner {
+    padding-block: 0;
+  }
+
+  .subnav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 0.25rem;
+    white-space: nowrap;
+  }
+
+  .subnav a {
+    display: inline-block;
+    padding: 0.8rem 0.85rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--ink-70);
+    border-bottom: 2px solid transparent;
+  }
+
+  .subnav a[aria-current] {
+    color: var(--ai-700);
+    border-bottom-color: var(--ai-700);
+  }
+
+  /* ================= デスクトップ =================
+     版面は .wrap の 1160px で頭打ちになるため、1160px を超える画面幅でも
+     ヘッダー内で使える幅は増えない。つまり「画面を広げれば入る」ことはない。
+     そこで
+       ・ナビの文字サイズは 0.8125rem のまま（可読性を優先して縮めない）
+       ・余白・間隔だけを詰めて約 90px を捻出する
+       ・それでも版面に収まらない言語ではブランドのサブ行を出さない
+     という順序で解決している。                                        */
+  @media (min-width: 1000px) {
+    .navToggle {
+      display: none;
+    }
+
+    .site-header__bar {
+      min-height: 78px;
+      gap: 1rem;
+    }
+
+    .brand {
+      gap: 0.55rem;
+    }
+
+    .brand__name {
+      font-size: 1.0625rem;
+    }
+
+    .brand__sub {
+      font-size: 0.75rem;
+    }
+
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      flex: 1 1 auto;
+      justify-content: flex-end;
+    }
+
+    .site-nav__list {
+      grid-auto-flow: column;
+      gap: 0.1rem;
+    }
+
+    .site-nav__list a {
+      border-bottom: 0;
+      padding: 0.5rem 0.45rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      position: relative;
+      white-space: nowrap;
+    }
+
+    .site-nav__list a[aria-current]::after {
+      content: '';
+      position: absolute;
+      left: 0.45rem;
+      right: 0.45rem;
+      bottom: 0.1rem;
+      height: 2px;
+      background: var(--ai-700);
+    }
+
+    .site-nav__cta {
+      margin-top: 0;
+      flex-wrap: nowrap;
+      gap: 0.45rem;
+    }
+
+    .site-nav__cta .btn {
+      white-space: nowrap;
+      padding-inline: 0.7rem;
+    }
+
+    .langs {
+      margin: 0;
+      padding: 0 0 0 0.75rem;
+      border-top: 0;
+      border-left: 1px solid var(--line-soft);
+      flex: none;
+    }
+
+    .langs__label {
+      display: none;
+    }
+
+    .langs ul {
+      gap: 0;
+      flex-wrap: nowrap;
+    }
+
+    .langs a {
+      min-height: 0;
+      line-height: 1.4;
+      font-size: 0.6875rem;
+      padding: 0.35rem 0.22rem;
+      white-space: nowrap;
+    }
+  }
+
+  /* 1000〜1240px はロゴ横のサブ行を出す余地がないため隠す。
+     ナビの文字サイズは縮めない。 */
+  @media (min-width: 1000px) and (max-width: 1240px) {
+    .brand__sub {
+      display: none;
+    }
+  }
+
+  /* 1241px 以上でも、ナビ項目の文字列が長い言語は版面に収まらない。
+     途中で切って見せるより出さないほうが良いため、その言語だけ隠す。
+     （日本語・中国語は収まるので表示したまま）
+     ナビのラベルを短くできた場合は、この指定を外してよい。 */
+  @media (min-width: 1241px) {
+    html[lang='vi'] .brand__sub {
+      display: none;
+    }
+  }
+
+  @media (max-width: 999px) {
+    .site-header__bar {
+      position: relative;
+    }
+  }
+</style>
+
+<script>
+  const toggle = document.querySelector<HTMLButtonElement>('[data-nav-toggle]');
+  const nav = document.querySelector<HTMLElement>('[data-nav]');
+
+  if (toggle && nav) {
+    const setOpen = (open: boolean) => {
+      toggle.setAttribute('aria-expanded', String(open));
+      if (open) nav.setAttribute('data-open', '');
+      else nav.removeAttribute('data-open');
+    };
+
+    toggle.addEventListener('click', () => {
+      setOpen(toggle.getAttribute('aria-expanded') !== 'true');
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+
+    // デスクトップ幅へ戻したときに開閉状態をリセットする
+    const mq = window.matchMedia('(min-width: 1000px)');
+    mq.addEventListener('change', (e) => {
+      if (e.matches) setOpen(false);
+    });
+  }
+</script>

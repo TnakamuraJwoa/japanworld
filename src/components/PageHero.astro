@@ -1,0 +1,97 @@
+---
+import Picture from './Picture.astro';
+import type { ImageName } from '../data/images.generated';
+
+interface Props {
+  eyebrow?: string;
+  title: string;
+  lead?: string;
+  image: ImageName;
+  priority?: boolean;
+}
+const { eyebrow, title, lead, image, priority = true } = Astro.props;
+---
+
+<section class="pageHero">
+  <div class="pageHero__media">
+    <Picture
+      name={image}
+      priority={priority}
+      sizes="100vw"
+      class="pageHero__img"
+      alt=""
+    />
+  </div>
+  <div class="wrap pageHero__inner">
+    {eyebrow && <p class="eyebrow pageHero__eyebrow">{eyebrow}</p>}
+    <h1 class="pageHero__title">{title}</h1>
+    {lead && <p class="pageHero__lead">{lead}</p>}
+  </div>
+</section>
+
+<style>
+  .pageHero {
+    position: relative;
+    isolation: isolate;
+    background: var(--ai-900);
+    color: #fff;
+  }
+
+  .pageHero__media {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+  }
+
+  .pageHero__media :global(.pageHero__img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .pageHero__media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        to right,
+        rgba(4, 20, 33, 0.7) 0%,
+        rgba(4, 20, 33, 0.45) 45%,
+        rgba(4, 20, 33, 0.25) 80%
+      ),
+      linear-gradient(
+        to bottom,
+        rgba(4, 20, 33, 0.45) 0%,
+        rgba(4, 20, 33, 0.34) 45%,
+        rgba(4, 20, 33, 0.6) 100%
+      );
+  }
+
+  .pageHero__inner {
+    padding-block: clamp(3.5rem, 11vw, 7.5rem);
+    max-width: min(var(--max), 100%);
+  }
+
+  .pageHero__eyebrow {
+    color: #e5c778;
+    font-weight: 700;
+    text-shadow: 0 1px 10px rgba(0, 12, 22, 0.8);
+  }
+
+  .pageHero__title {
+    font-size: var(--step-4);
+    color: #fff;
+    max-width: 22ch;
+    text-shadow: 0 1px 16px rgba(0, 20, 35, 0.45);
+  }
+
+  .pageHero__lead {
+    margin-top: 1.1rem;
+    max-width: 46ch;
+    font-size: var(--step-1);
+    line-height: 1.9;
+    color: #e4ecf2;
+    text-shadow: 0 1px 12px rgba(0, 20, 35, 0.45);
+  }
+</style>

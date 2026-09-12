@@ -1,0 +1,145 @@
+---
+import PageHero from '../components/PageHero.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import Picture from '../components/Picture.astro';
+import { bookingUrl, type Lang } from '../data/site';
+import type { Dict } from '../i18n/types';
+import type { ImageName } from '../data/images.generated';
+
+interface Props {
+  lang: Lang;
+  t: Dict;
+}
+const { lang, t } = Astro.props;
+const p = t.pages.rooms;
+
+// 客室タイプの並びに対応する写真（ホテルサイトの各タイプの写真）
+const typeImages: ImageName[] = [
+  'rooms/premium-suite-a',
+  'rooms/premium-suite-b',
+  'rooms/premium-superior',
+  'rooms/standard-room',
+];
+---
+
+<PageHero eyebrow={p.eyebrow} title={p.h1} lead={p.lead} image="rooms/window-view" />
+<Breadcrumbs lang={lang} t={t} trail={['hotel', 'rooms']} />
+
+<section class="section section--tight">
+  <div class="wrap-narrow">
+    <p class="h-lead">{p.introBody}</p>
+    <p class="checkin">{p.checkInOut}</p>
+  </div>
+</section>
+
+{
+  p.types.map((room, i) => (
+    <section class:list={['section', i % 2 === 1 && 'section--paper']}>
+      <div class:list={['wrap', 'split', i % 2 === 1 && 'split--reverse']}>
+        <div class="split__text">
+          <p class="eyebrow">{room.nameEn}</p>
+          <h2 class="section-title">{room.name}</h2>
+          <hr class="rule" />
+          <p class="room__meta">
+            <span>{room.size}</span>
+            <span aria-hidden="true">｜</span>
+            <span>{room.capacity}</span>
+          </p>
+          <p>{room.body}</p>
+          <ul class="room__specs">
+            {room.specs.map((sp) => (
+              <li>{sp}</li>
+            ))}
+          </ul>
+        </div>
+        <figure class="figure">
+          <Picture name={typeImages[i]} sizes="(min-width: 860px) 46vw, 92vw" ratio="16/9" />
+        </figure>
+      </div>
+    </section>
+  ))
+}
+
+<!-- 設備・アメニティ -->
+<section class="section section--paper">
+  <div class="wrap">
+    <h2 class="section-title">{p.amenityHeading}</h2>
+    <hr class="rule" />
+    <dl class="dl amenity">
+      {
+        p.amenityRows.map(([k, v]) => (
+          <div class="dl__row">
+            <dt>{k}</dt>
+            <dd>{v}</dd>
+          </div>
+        ))
+      }
+    </dl>
+    <ul class="notes typeNotes">
+      {p.typeNotes.map((x) => <li>{x}</li>)}
+    </ul>
+    <p class="callout roomNote">
+      {p.note}
+      <br />
+      <a class="ext" href={bookingUrl(lang)} target="_blank" rel="noopener">
+        {t.booking.generalCta}
+      </a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .checkin {
+    margin-top: 1.5rem;
+    display: inline-block;
+    font-size: var(--step--1);
+    letter-spacing: 0.04em;
+    color: var(--ai-800);
+    border: 1px solid var(--line);
+    padding: 0.5rem 1rem;
+  }
+
+  .room__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-family: var(--serif);
+    font-size: var(--step-1);
+    color: var(--ai-800);
+  }
+
+  .room__specs {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .room__specs li {
+    font-size: var(--step--1);
+    line-height: 1.5;
+    color: var(--ink-70);
+    background: var(--paper-2);
+    border: 1px solid var(--line-soft);
+    padding: 0.3rem 0.7rem;
+  }
+
+  .section--paper .room__specs li {
+    background: var(--white);
+  }
+
+  .amenity {
+    margin-top: 1.75rem;
+    max-width: 56rem;
+  }
+
+  .typeNotes {
+    margin-top: 1.25rem;
+  }
+
+  .roomNote {
+    margin-top: 2rem;
+  }
+</style>

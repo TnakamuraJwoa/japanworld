@@ -1,0 +1,29 @@
+---
+import { pathFor, type Lang, type RouteKey } from '../data/site';
+import type { Dict } from '../i18n/types';
+
+interface Props {
+  lang: Lang;
+  t: Dict;
+  /** ホームを除いた経路 */
+  trail: RouteKey[];
+}
+const { lang, t, trail } = Astro.props;
+---
+
+<nav class="crumbs wrap" aria-label="Breadcrumb">
+  <ol>
+    <li><a href={pathFor(lang, 'home')}>{t.ui.breadcrumbHome}</a></li>
+    {
+      trail.map((key, i) =>
+        i === trail.length - 1 ? (
+          <li aria-current="page">{t.nav[key]}</li>
+        ) : (
+          <li>
+            <a href={pathFor(lang, key)}>{t.nav[key]}</a>
+          </li>
+        ),
+      )
+    }
+  </ol>
+</nav>
