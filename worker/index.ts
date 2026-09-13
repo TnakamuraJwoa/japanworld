@@ -2,19 +2,26 @@
  * Japan World株式会社 — Cloudflare Worker
  *
  * 役割:
- *   1. apex (japanworld.co.jp) → www へ 301（パス・クエリを保持）
+ *   1. ホスト正規化・旧URL解決・末尾スラッシュ・?lightbox= を
+ *      **1回の 301 にまとめる**（リダイレクトチェーンを作らない）
  *   2. 旧URL → 新URL へ 301
  *      a. Wix 時代のページ（/rakihouse, /salon, /companyprofile …）
  *      b. ホテル中心だった前構成（/raki-house/…, /booking/, /membership/, /access/）
  *      c. 多言語（/en/… /zh/… /vi/…）→ 対応する日本語ページ
- *   3. Wix 固有パス → 410 Gone
- *   4. 末尾スラッシュの正規化
- *   5. 静的アセットの配信とセキュリティヘッダー付与
- *   6. 404 は /404.html を 404 ステータスで返す
+ *   3. 廃止ページ・Wix 固有パス → 410 Gone
+ *   4. 静的アセットの配信とセキュリティヘッダー付与
+ *   5. 404 は /404.html を 404 ステータスで返す
  *
  * ⚠ 2026-09-13 コーポレートサイト化に伴い、対応表を全面的に差し替えた。
- *   多言語ページ（36URL）は廃止し、すべて日本語版へ 301 している。
- *   旧対応表は docs/03-url-migration.md を参照。
+ *
+ * ⚠ 2026-09-13 SEO 改修（docs/08-seo-audit.md）:
+ *     - 対応表に無い /en/ /zh/ /vi/ 配下を **トップページへ 301 していた処理を撤去**した。
+ *       関連の無いページをまとめてトップへ送ると Google に soft 404 と判定され、
+ *       トップページの評価まで下げるため、素直に 404 を返す。
+ *     - 旧 Wix の廃止ページ（/甲斐路-home ／ /blog-feed.xml）を 410 Gone に追加。
+ *       /甲斐路-home は別会社へ売却済みの施設のページ。301 にしない（下記 GONE_PATHS 参照）。
+ *     - apex→www と旧URL解決を統合し、1 ホップで最終URLへ着地させる。
+ *     - 統合先ページの該当セクションへ着地するようフラグメントを付けた。
  */
 
 export interface Env {
@@ -39,6 +46,24 @@ const P = {
 } as const;
 
 /**
+ * 統合先ページ内のセクション。
+ *
+ * 旧サイトで独立していたページ（客室・温泉・宴会場・会員権・予約）は
+ * /business/hospitality/ 1ページへ統合した。1ページにまとまった分、
+ * 旧URLから来た人がページ最上部に落ちると目的の情報まで遠い。
+ * フラグメントを付けて該当セクションへ着地させる。
+ *
+ * ⚠ Google はフラグメントを無視して /business/hospitality/ として索引するため、
+ *   URL の正規化・評価の集約には影響しない（純粋に着地位置の改善）。
+ *   id は src/pages/business/hospitality.astro 側と対応させること。
+ */
+const H = {
+  facilities: `${P.hospitality}#facilities`,
+  booking: `${P.hospitality}#booking`,
+  membership: `${P.hospitality}#membership`,
+} as const;
+
+/**
  * 旧スラッグ → 新パス。
  * 日本語のパスをそのまま書き、言語プレフィックス版は下で自動展開する。
  */
@@ -46,28 +71,29 @@ const SLUG_MAP: Record<string, string> = {
   /* ---- a. Wix 時代のページ ---- */
   '/rakihouse': P.hospitality,
   '/楽気ハウス-那須': P.hospitality,
-  '/lobby': P.hospitality,
+  '/lobby': H.facilities,
   '/about': P.hospitality,
-  '/room': P.hospitality,
-  '/spa': P.hospitality,
-  '/restaurant-and-bar': P.hospitality,
-  '/banquethall': P.hospitality,
+  '/room': H.facilities,
+  '/spa': H.facilities,
+  '/restaurant-and-bar': H.facilities,
+  '/banquethall': H.facilities,
   // 細胞浴SALON 太古の甕 はウェルネス事業ページへ
   '/salon': P.wellness,
-  '/about-5': P.hospitality,
+  // 楽気ハウス会員権。統合先の該当セクションへ
+  '/about-5': H.membership,
   '/companyprofile': P.company,
 
   /* ---- b. ホテル中心だった前構成 ---- */
   '/raki-house': P.hospitality,
-  '/raki-house/rooms': P.hospitality,
-  '/raki-house/spa': P.hospitality,
-  '/raki-house/dining': P.hospitality,
-  '/raki-house/banquet': P.hospitality,
+  '/raki-house/rooms': H.facilities,
+  '/raki-house/spa': H.facilities,
+  '/raki-house/dining': H.facilities,
+  '/raki-house/banquet': H.facilities,
   '/raki-house/nasu': P.hospitality,
   // スパ&サロンページは細胞浴とエステに分割した。主題である細胞浴側へ送る
   '/raki-house/salon': P.wellness,
-  '/booking': P.hospitality,
-  '/membership': P.hospitality,
+  '/booking': H.booking,
+  '/membership': H.membership,
   '/access': P.hospitality,
 };
 
@@ -120,14 +146,14 @@ const REDIRECTS: Record<string, string> = (() => {
 })();
 
 /**
- * 対応表に無い多言語URLの受け皿。
- * /en/ 配下のどのパスであっても、最低限トップページへは着地させる。
+ * 廃止した言語プレフィックスの配下かどうか。
+ *
+ * 対応表（REDIRECTS）に載っている 12 ページは各言語とも日本語版へ 301 する。
+ * ここで拾うのは **対応表に無いパス**で、そういうURLは元々存在しなかったか、
+ * 対応する日本語ページが無いもの。トップページへ送らず 404 を返す。
  */
-function languageFallback(pathname: string): string | undefined {
-  for (const prefix of LANG_PREFIXES) {
-    if (pathname === prefix || pathname.startsWith(`${prefix}/`)) return P.home;
-  }
-  return undefined;
+function isRetiredLanguagePath(pathname: string): boolean {
+  return LANG_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
 /** 移行後は存在しない Wix 固有パス（410 Gone を返してクロールを止める） */
@@ -139,6 +165,38 @@ const GONE_PREFIXES = [
   '/_functions/',
   '/_files/',
 ];
+
+/**
+ * 廃止したページ。代替となる新ページが無いため 301 せず 410 Gone を返す。
+ *
+ * ⚠ `/甲斐路-home` … 「楽気ハウス甲斐路」（山梨）のページ。
+ *   2023-03 時点では公開されていた（Internet Archive で 200 を確認）が、
+ *   2026-09 の旧サイト調査時点では sitemap から外れていた。
+ *
+ *   **楽気ハウス甲斐路は別会社へ売却済みで、現在の Japan World株式会社とは
+ *   関係がありません**（2026-09-13 ご確認済み）。したがって当社サイトに
+ *   対応ページは存在せず、今後も作りません。
+ *
+ *   → 代替ページなしの廃止として 410 Gone。
+ *
+ *   ⚠ この行を消して 301 に変えないでください。
+ *     - `/business/hospitality/`（那須）へ送る … 別施設への誤誘導になる
+ *     - 売却先の `kaiji.co.jp` へ送る … 当社と無関係のドメインへ
+ *       当社ドメインの評価を渡すことになる
+ *   ⚠ 甲斐路を新サイトの事業として復活させないでください。
+ *     `npm run verify` の [12] が、ビルド成果物に「甲斐路 / kaiji」が
+ *     混入していないか毎回検査します。
+ *
+ * ⚠ `/blog-feed.xml` … Wix のブログ RSS フィード。
+ *   新サイトにブログは無い（お知らせは /news/）。
+ *   フィードの代替にならないため 301 せず 410。
+ */
+const GONE_PATHS = ['/甲斐路-home', '/blog-feed.xml'];
+
+/** 言語プレフィックス版まで展開した 410 対象 */
+const GONE_EXACT: Set<string> = new Set(
+  GONE_PATHS.flatMap((p) => [p, ...LANG_PREFIXES.map((prefix) => `${prefix}${p}`)]),
+);
 
 const SECURITY_HEADERS: Record<string, string> = {
   'X-Content-Type-Options': 'nosniff',
@@ -162,13 +220,22 @@ const SECURITY_HEADERS: Record<string, string> = {
   ].join('; '),
 };
 
-function redirect(url: URL, pathname: string, keepQuery = true): Response {
+/**
+ * 301 を返す。
+ *
+ * `to` は `/business/hospitality/` でも `/business/hospitality/#membership` でも良い。
+ * ホスト・プロトコルはここで必ず正規化するので、apex からの流入も
+ * 「旧URL → 最終URL」の 1 ホップで終わる。
+ */
+function redirect(url: URL, to: string, keepQuery = true): Response {
+  const hashAt = to.indexOf('#');
   const target = new URL(url.toString());
   target.protocol = 'https:';
   target.hostname = CANONICAL_HOST;
   target.port = '';
   // 非ASCIIを含むパスは URL 側でエンコードされる
-  target.pathname = pathname;
+  target.pathname = hashAt === -1 ? to : to.slice(0, hashAt);
+  target.hash = hashAt === -1 ? '' : to.slice(hashAt);
   if (!keepQuery) target.search = '';
   return new Response(null, {
     status: 301,
@@ -177,6 +244,13 @@ function redirect(url: URL, pathname: string, keepQuery = true): Response {
       'Cache-Control': 'public, max-age=3600',
       ...SECURITY_HEADERS,
     },
+  });
+}
+
+function gone(): Response {
+  return new Response('Gone', {
+    status: 410,
+    headers: { 'Content-Type': 'text/plain; charset=utf-8', ...SECURITY_HEADERS },
   });
 }
 
@@ -226,62 +300,69 @@ export default {
       pathname = url.pathname;
     }
 
-    // ---- 2. apex → www（パス・クエリを保持） ----
-    if (url.hostname !== CANONICAL_HOST && url.hostname.endsWith('japanworld.co.jp')) {
-      return redirect(url, pathname);
-    }
-
-    // ---- 3. Wix のライトボックス用クエリを落とす ----
-    if (url.searchParams.has('lightbox')) {
-      return redirect(url, pathname, false);
-    }
-
-    // ---- 4. 旧URL → 新URL ----
-    //        大文字小文字の揺れと末尾スラッシュの有無を吸収する。
-    //        日本語スラッグ（/楽気ハウス-那須）は toLowerCase の影響を受けない。
+    // 大文字小文字の揺れと末尾スラッシュの有無を吸収してから照合する。
+    // 日本語スラッグ（/楽気ハウス-那須）は toLowerCase の影響を受けない。
     const lower = pathname.toLowerCase();
     const stripped = lower.length > 1 && lower.endsWith('/') ? lower.slice(0, -1) : lower;
 
+    // ---- 2. 廃止ページ・Wix 固有パス → 410 Gone ----
+    //        （301 の判定より前に置く。リダイレクト対象の _files/ugd の PDF は
+    //          下の REDIRECTS で拾うため、ここでは GONE_PREFIXES と衝突しないよう
+    //          先に対応表を確認する）
     const mapped = REDIRECTS[lower] ?? REDIRECTS[stripped];
-    if (mapped) {
-      return redirect(url, mapped);
+
+    if (!mapped) {
+      if (GONE_EXACT.has(stripped) || GONE_PREFIXES.some((p) => lower.startsWith(p))) {
+        return gone();
+      }
+
+      // ---- 3. 対応表に無い旧多言語URL → 404 ----
+      //        「関連の無いページをまとめてトップへ 301」は soft 404 と判定されるため行わない。
+      //        末尾スラッシュの正規化より前に返し、404 までに 301 を挟まないようにする。
+      if (isRetiredLanguagePath(stripped)) {
+        return notFound(env, url);
+      }
     }
 
-    // 対応表に無い旧多言語URLも、トップへ着地させる（404 にしない）
-    const langFallback = languageFallback(stripped);
-    if (langFallback) {
-      return redirect(url, langFallback);
-    }
-
-    // ---- 5. Wix 固有パス → 410 Gone（ただしリダイレクト対象の _files は除く） ----
-    if (GONE_PREFIXES.some((p) => lower.startsWith(p))) {
-      return new Response('Gone', {
-        status: 410,
-        headers: { 'Content-Type': 'text/plain; charset=utf-8', ...SECURITY_HEADERS },
-      });
-    }
-
-    // ---- 6. 末尾スラッシュの正規化（ファイル以外は必ず付ける） ----
+    // ---- 4. 転送先を 1 つに決める ----
+    //        旧URL対応表 → 末尾スラッシュ正規化 の順に解決し、
+    //        ホスト正規化とあわせて **1 回の 301** で最終URLへ送る。
     const isFile = /\.[a-z0-9]+$/i.test(pathname);
-    if (!isFile && !pathname.endsWith('/')) {
-      return redirect(url, `${pathname}/`);
+    const normalized = !isFile && !pathname.endsWith('/') ? `${pathname}/` : pathname;
+    const target = mapped ?? normalized;
+
+    // Wix のライトボックス用クエリは意味を持たないので落とす
+    const dropQuery = url.searchParams.has('lightbox');
+    // apex（japanworld.co.jp）や http からの流入は www + https へ寄せる。
+    // Cloudflare 側の Always Use HTTPS に頼らず、Worker でも https を担保する。
+    // workers.dev やローカルの検証ホストは対象外にして、そのまま動かす。
+    const ownDomain = url.hostname.endsWith('japanworld.co.jp');
+    const wrongOrigin = ownDomain && (url.hostname !== CANONICAL_HOST || url.protocol !== 'https:');
+
+    if (wrongOrigin || target !== pathname || dropQuery) {
+      return redirect(url, target, !dropQuery);
     }
 
-    // ---- 7. 静的アセットを返す ----
+    // ---- 5. 静的アセットを返す ----
     const assetRes = await env.ASSETS.fetch(request);
 
     if (assetRes.status === 404) {
-      const notFound = await env.ASSETS.fetch(new URL('/404.html', url.origin));
-      return new Response(notFound.body, {
-        status: 404,
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'no-store',
-          ...SECURITY_HEADERS,
-        },
-      });
+      return notFound(env, url);
     }
 
     return withHeaders(assetRes, pathname);
   },
 } satisfies ExportedHandler<Env>;
+
+/** /404.html を 404 ステータスで返す */
+async function notFound(env: Env, url: URL): Promise<Response> {
+  const res = await env.ASSETS.fetch(new URL('/404.html', url.origin));
+  return new Response(res.body, {
+    status: 404,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store',
+      ...SECURITY_HEADERS,
+    },
+  });
+}

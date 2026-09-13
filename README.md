@@ -40,7 +40,7 @@ $env:PATH = "C:\Program Files\nodejs;$env:PATH"      # PowerShell
 | `npm run check` | 型チェック（`astro check`） |
 | `npm run images` | `assets/source/` から `public/images/` の WebP を再生成 |
 | `npm run verify` | ビルド成果物の検証（SEO・alt・リンク・Wix依存・sitemap ほか） |
-| `npm run verify:redirects` | 旧URLのリダイレクト 153 ケースを検証 |
+| `npm run verify:redirects` | 旧URLのリダイレクト 172 ケース + チェーン検査 |
 | `npm run verify:overflow` | 8つの画面幅で横スクロールが起きていないか検証（Chrome / Edge が必要） |
 | `npm run verify:nav` | スマホ幅でハンバーガーメニューが開閉・タップできるか検証（Chrome / Edge が必要） |
 | `npm run shots` | 全ページのスクリーンショットを撮る（Chrome / Edge が必要） |
@@ -182,14 +182,16 @@ npx wrangler deploy
 |---|---|
 | [docs/01-research.md](docs/01-research.md) | 現行 Wix サイトの調査結果（全URL・Wix依存・外部サービス・SEO実測） |
 | [docs/02-site-design.md](docs/02-site-design.md) | 現行サイトの問題点と、新サイトの設計 |
-| [docs/03-url-migration.md](docs/03-url-migration.md) | 旧URL → 新URL の全対応表 |
+| [docs/03-url-migration.md](docs/03-url-migration.md) | **旧URL → 新URL の全対応表（現行）** |
 | **[docs/04-content-review.md](docs/04-content-review.md)** | **★ 古い情報・矛盾・要確認事項（最初に読んでください）** |
 | [docs/05-health-content-review.md](docs/05-health-content-review.md) | 健康・医療に関わる表現のレビュー |
 | [docs/06-dns-migration.md](docs/06-dns-migration.md) | DNS 調査結果と移行手順 |
-| **[docs/07-corporate-renewal.md](docs/07-corporate-renewal.md)** | **★ 今回のコーポレートサイト改修の決定事項と要確認事項** |
+| **[docs/07-corporate-renewal.md](docs/07-corporate-renewal.md)** | **★ コーポレートサイト改修の決定事項と要確認事項** |
+| **[docs/08-seo-audit.md](docs/08-seo-audit.md)** | **★ SEO 監査と改修（旧URLの扱い・title/description・構造化データ・検証結果）** |
+| [docs/09-rakinasu-kaiji-ticket.md](docs/09-rakinasu-kaiji-ticket.md) | rakinasu.com（別サイト・Wix）の旧甲斐路チケット案内の統合手順。**未適用の原稿** |
 
-⚠ docs/01〜03 はホテル中心だった前構成を前提に書かれています。
-現在の構成は docs/07 が正です。
+⚠ docs/01〜02 はホテル中心だった前構成を前提に書かれています。
+サイト構成は docs/07、URL の対応表は docs/03、SEO は docs/08 が正です。
 
 ---
 
@@ -205,6 +207,7 @@ npx wrangler deploy
 - **失効した証明書へ利用者を誘導しない。** NFT導線は `FEATURES.nftLink` で無効化中（docs/04 要確認 #6）
 - **健康表現を追加・強化しない。** `docs/05-health-content-review.md` 参照
 - **Webフォント・外部スクリプトを読み込まない。** CSP を `default-src 'self'` に保てる
-- **旧URLを捨てない。** Wix 時代・前構成・多言語のすべてに 301 を用意する（153ケースを検証）
+- **旧URLを捨てない。ただし何でもトップへ飛ばさない。** 対応する新ページがあるものだけ 301、
+  無いものは 404/410（`docs/08-seo-audit.md` §4）。172ケース + チェーン検査で検証する
 - **アニメーションのためにライブラリを足さない。** CSS と IntersectionObserver 約20行のみ。
   `prefers-reduced-motion: reduce` では初期状態の隠しごと無効化する

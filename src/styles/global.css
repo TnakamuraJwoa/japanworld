@@ -74,6 +74,16 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  /* 固定ヘッダー（64px / PC 76px）の分だけ、
+     フラグメント（#membership など）の着地位置を下げる。
+     旧URLからの 301 がセクション見出しの直上に着地する。 */
+  scroll-padding-top: 4.5rem;
+}
+
+@media (min-width: 1000px) {
+  html {
+    scroll-padding-top: 5.5rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

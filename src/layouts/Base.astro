@@ -26,21 +26,41 @@ interface Props {
   noindex?: boolean;
   /** トップページだけ <title> にページ名を重ねない */
   bareTitle?: boolean;
+  /**
+   * og:type。既定は website。
+   * 記事（お知らせ詳細）だけ article にする。
+   * ⚠ 会社案内・事業紹介のような常設ページを article にすると
+   *   「いつ書かれた記事か」を探されるため website が正しい。
+   */
+  ogType?: 'website' | 'article';
 }
 
 const {
   title,
   description,
   path,
-  ogImage = 'salon/kame-open',
+  // 既定 OGP は会社を代表する画像にする。
+  // （サロンの画像は JWORLD CO.,LTD の事業のものなので既定にしない）
+  ogImage = 'hero/corporate-resort',
   preloadImage,
   jsonLd = [],
   noindex = false,
   bareTitle = false,
+  ogType = 'website',
 } = Astro.props;
 
 const canonical = new URL(path, SITE.origin).href;
-const fullTitle = bareTitle ? title : `${title} | ${COMPANY.name}`;
+/** 区切りは全角「｜」で統一する（半角 | と混在させない） */
+const fullTitle = bareTitle ? title : `${title}｜${COMPANY.name}`;
+
+/**
+ * robots。
+ * 既定でも index, follow だが、画像プレビューとスニペットの上限を
+ * 明示して検索結果での見え方を広げる。
+ */
+const robots = noindex
+  ? 'noindex, follow'
+  : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 
 const og = IMAGES[ogImage];
 const ogUrl = new URL(`/images/${ogImage}-${og.widths[og.widths.length - 1]}.webp`, SITE.origin).href;
@@ -65,9 +85,9 @@ const preload = preloadImage
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    {noindex && <meta name="robots" content="noindex, follow" />}
+    <meta name="robots" content={robots} />
 
-    <meta property="og:type" content={path === '/' ? 'website' : 'article'} />
+    <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content={COMPANY.name} />
     <meta property="og:locale" content="ja_JP" />
     <meta property="og:title" content={fullTitle} />
@@ -82,6 +102,7 @@ const preload = preloadImage
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogUrl} />
+    <meta name="twitter:image:alt" content={og.alt} />
 
     <meta name="theme-color" content="#062f4a" />
     <meta name="format-detection" content="telephone=no" />

@@ -29,6 +29,13 @@
 
 ### 1.2 「楽気ハウス甲斐路」はリポジトリに存在しなかった
 
+> ⚠ **2026-09-13 追記**: 楽気ハウス甲斐路は**別会社へ売却済み**で、
+> 現在の Japan World株式会社とは関係がないことが確認されました。
+> 旧URL `/甲斐路-home` は **410 Gone**（`kaiji.co.jp` への 301 も行いません）。
+> 判断理由は `docs/03-url-migration.md` §5 と `docs/08-seo-audit.md` §3.1.1 が正です。
+> 下表の「掲載取り下げ」は、売却先の管理対象となるもの（kaiji.co.jp・宿泊予約サイト等）を含むため、
+> 当社側で対応が要るのは `www.rakinasu.com` のみです。
+
 `甲斐路` `甲斐` `kaiji` を `src/` `public/` `docs/` `scripts/` `worker/` `assets/` `README.md`
 全走査 → **0件**。削除・整理が必要なコードはありませんでした。
 
@@ -49,7 +56,7 @@
 | # | 論点 | 決定 |
 |---|---|---|
 | 1 | 楽気ハウス那須の扱い | **事業の一つとして掲載**。`/business/hospitality/` 1ページに集約し、施設詳細と宿泊予約は rakinasu.com へ送客 |
-| 2 | 細胞浴・エステの運営主体 | **JWORLD CO.,LTD（ジーワールド株式会社）の事業**。下記 2.1 参照 |
+| 2 | 細胞浴・エステの運営主体 | **JWORLD CO.,LTD（ジェイワールド株式会社）の事業**。下記 2.1 参照 |
 | 3 | システム・IT事業 | **今回は掲載しない**（Technology カードは作っていません） |
 | 4 | 多言語 36URL | **日本語版へ 301 リダイレクト** |
 
@@ -57,8 +64,8 @@
 
 | 事業 | 運営会社 |
 |---|---|
-| 細胞浴SALON「太古の甕」 | **JWORLD CO.,LTD（ジーワールド株式会社）** |
-| エステ事業（Esthetic Salon RICHIA） | **JWORLD CO.,LTD（ジーワールド株式会社）** |
+| 細胞浴SALON「太古の甕」 | **JWORLD CO.,LTD（ジェイワールド株式会社）** |
+| エステ事業（Esthetic Salon RICHIA） | **JWORLD CO.,LTD（ジェイワールド株式会社）** |
 | Resort Hotel 楽気ハウス那須 | **Japan World株式会社** |
 
 サロンの2事業は Japan World株式会社の直接事業ではありません。
@@ -129,18 +136,29 @@ src/components/Footer.astro フッターの運営会社表示
 
 ### 3.1 URL の引き継ぎ
 
-`worker/index.ts` で 301。`npm run verify:redirects` の **153 ケースすべて通過**。
+> ⚠ この節は改修当時の内容です。
+> **現在の対応表は `docs/03-url-migration.md`**（2026-09-13 の SEO 改修で改訂）を参照してください。
+> 主な変更点は 2 つで、いずれも `docs/08-seo-audit.md` §4 に理由を書いています。
+>
+> - 対応表に無い `/en/…` `/zh/…` `/vi/…` を**トップページへ 301 する処理を撤去**し、404 に変更
+>   （関連の無いページをまとめてトップへ送ると Google に soft 404 と判定されるため）
+> - 統合先ページの該当セクションへ着地するようフラグメント（`#facilities` ほか）を付与
+
+`worker/index.ts` で 301。`npm run verify:redirects` の **172 ケースすべて通過**。
 
 | 旧 | 新 |
 |---|---|
-| `/rakihouse` `/楽気ハウス-那須` `/lobby` `/about` `/room` `/spa` `/restaurant-and-bar` `/banquethall` `/about-5` | `/business/hospitality/` |
+| `/rakihouse` `/楽気ハウス-那須` `/about` | `/business/hospitality/` |
+| `/lobby` `/room` `/spa` `/restaurant-and-bar` `/banquethall` | `/business/hospitality/#facilities` |
+| `/about-5` | `/business/hospitality/#membership` |
 | `/salon` | `/business/wellness/` |
 | `/companyprofile` | `/company/` |
-| `/raki-house/` および配下（`rooms` `spa` `dining` `banquet` `nasu`） | `/business/hospitality/` |
+| `/raki-house/` および配下（`rooms` `spa` `dining` `banquet` `nasu`） | `/business/hospitality/`（一部 `#facilities`） |
 | `/raki-house/salon/` | `/business/wellness/` |
-| `/booking/` `/membership/` `/access/` | `/business/hospitality/` |
+| `/booking/` `/membership/` `/access/` | `/business/hospitality/`（一部 `#booking` `#membership`） |
 | `/en/…` `/zh/…` `/vi/…`（対応表にあるもの） | 対応する日本語ページ |
-| `/en/…` `/zh/…` `/vi/…`（対応表にないもの） | `/`（`languageFallback()` が受ける。404 にしない） |
+| `/en/…` `/zh/…` `/vi/…`（対応表にないもの） | **404**（トップへは飛ばさない） |
+| `/甲斐路-home` `/blog-feed.xml` | **410 Gone**（廃止・代替ページなし） |
 
 ---
 

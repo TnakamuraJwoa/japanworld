@@ -12,7 +12,7 @@
  */
 import Base from '../layouts/Base.astro';
 import Picture from '../components/Picture.astro';
-import { SITE, COMPANY, pathFor, ROUTE_LABEL } from '../data/site';
+import { COMPANY, pathFor, ROUTE_LABEL } from '../data/site';
 import { OWN_BUSINESSES, INHOUSE_SALONS } from '../data/business';
 import { getNews, formatDate, NEWS_ON_HOME } from '../data/news';
 import { organization, webSite } from '../data/jsonld';
@@ -47,8 +47,14 @@ const values = [
 ];
 ---
 
+{/*
+  トップページの <title>。
+  ⚠ 以前は「Japan World株式会社 | 健康と、美しさと、暮らしのそばに。」だったが、
+    タグラインだけでは検索結果を見た人に事業が伝わらないため、
+    「社名 ＋ 何をしている会社か」に変えた。タグラインは h1 に残している。
+*/}
 <Base
-  title={`${COMPANY.name} | ${SITE.tagline}`}
+  title={`${COMPANY.name}｜那須高原のリゾートホテル運営`}
   bareTitle
   description="Japan World株式会社は、栃木県・那須高原のリゾートホテル「楽気ハウス那須」を運営しています。館内には、細胞浴SALON「太古の甕」と Esthetic Salon RICHIA を併設し、宿泊とあわせてご利用いただけます。"
   path="/"
@@ -62,9 +68,17 @@ const values = [
       <Picture name="hero/corporate-resort" alt="" sizes="100vw" priority class="hero__img" />
     </div>
 
+    {/*
+      h1 に社名を入れている。
+      ⚠ 以前は h1 がタグラインだけで、社名は上の <p class="hero__eyebrow"> にあった。
+        トップページの h1 は「どこの会社のサイトか」が読んで分かる必要があるため、
+        社名を h1 の中に取り込み、見た目（金色・字間広め）はそのまま保っている。
+    */}
     <div class="wrap hero__inner">
-      <p class="hero__eyebrow">JAPAN WORLD CO., LTD.</p>
-      <h1 class="hero__title">健康と、美しさと、<br />暮らしのそばに。</h1>
+      <h1 class="hero__title">
+        <span class="hero__name">{COMPANY.name}</span>{' '}
+        <span class="hero__tagline">健康と、美しさと、<br />暮らしのそばに。</span>
+      </h1>
       <p class="hero__sub">
         那須高原のリゾートホテル「楽気ハウス那須」を運営しています。<br />
         館内には、細胞浴とエステティックのサロンを併設しています。
@@ -338,7 +352,16 @@ const values = [
     color: #fff;
   }
 
-  .hero__eyebrow {
+  /* h1 は「社名（小）＋タグライン（大）」の 2 段組み。
+     見出しタグは 1 つのまま、視覚的な主役はタグラインに置いている。 */
+  .hero__title {
+    color: #fff;
+    text-shadow: 0 1px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  .hero__name {
+    display: block;
+    font-family: var(--sans);
     font-size: var(--step--1);
     letter-spacing: 0.3em;
     color: var(--gold-soft);
@@ -346,12 +369,11 @@ const values = [
     margin-bottom: clamp(1rem, 3vw, 1.75rem);
   }
 
-  .hero__title {
+  .hero__tagline {
+    display: block;
     font-size: clamp(2rem, 7.2vw, 4rem);
     line-height: 1.45;
     letter-spacing: 0.04em;
-    color: #fff;
-    text-shadow: 0 1px 24px rgba(0, 0, 0, 0.3);
   }
 
   .hero__sub {

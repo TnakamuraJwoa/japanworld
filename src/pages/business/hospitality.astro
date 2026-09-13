@@ -5,6 +5,12 @@
  * ⚠ 宿泊の在庫・料金・季節の情報は www.rakinasu.com が正典。
  *   このページは「Japan World が運営している事業」としての紹介にとどめ、
  *   予約と最新情報はホテル公式サイトへ送客する。
+ *
+ * ⚠ title はナビ用のラベル「ホスピタリティ」を重ねず、事業そのものの名前にしている。
+ *   検索結果に出たときに何のページか分かることを優先した（docs/08-seo-audit.md）。
+ *
+ * ⚠ section の id（#facilities / #booking / #membership）は
+ *   worker/index.ts の旧URLリダイレクト先と対応している。変更するときは両方直すこと。
  */
 import Base from '../../layouts/Base.astro';
 import Picture from '../../components/Picture.astro';
@@ -65,7 +71,7 @@ const membership: [string, string][] = [
 ---
 
 <Base
-  title="ホスピタリティ｜Resort Hotel 楽気ハウス那須"
+  title="Resort Hotel 楽気ハウス那須"
   description="Japan World株式会社が那須高原で運営するリゾートホテル「楽気ハウス那須」。全26室、温泉大浴場と露天風呂、200人規模のコンベンションホールを備えています。会員制ですが一般のお客様もご宿泊いただけます。"
   path={pathFor('hospitality')}
   ogImage="hotel/exterior"
@@ -152,7 +158,8 @@ const membership: [string, string][] = [
   </section>
 
   {/* ============ 館内のご案内 ============ */}
-  <section class="section">
+  {/* id は worker/index.ts の旧URLリダイレクト先（/room /spa /banquethall など）と対応 */}
+  <section class="section" id="facilities">
     <div class="wrap">
       <p class="eyebrow reveal">Inside</p>
       <h2 class="section-title reveal" data-delay="1">館内のご案内</h2>
@@ -195,7 +202,8 @@ const membership: [string, string][] = [
   </section>
 
   {/* ============ 宿泊のご予約 ============ */}
-  <section class="section section--paper">
+  {/* id は worker/index.ts の旧URLリダイレクト先（/booking）と対応 */}
+  <section class="section section--paper" id="booking">
     <div class="wrap">
       <p class="eyebrow reveal">Reservation</p>
       <h2 class="section-title reveal" data-delay="1">宿泊のご予約</h2>
@@ -241,7 +249,8 @@ const membership: [string, string][] = [
   </section>
 
   {/* ============ 会員権 ============ */}
-  <section class="section">
+  {/* id は worker/index.ts の旧URLリダイレクト先（/about-5 /membership）と対応 */}
+  <section class="section" id="membership">
     <div class="wrap-narrow">
       <p class="eyebrow reveal">Membership</p>
       <h2 class="section-title reveal" data-delay="1">楽気ハウス会員権</h2>

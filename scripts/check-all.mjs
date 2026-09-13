@@ -89,6 +89,18 @@ const pages = htmlFiles.map((file) => {
     hreflangs: all(/<link rel="alternate" hreflang="([^"]+)" href="([^"]+)"/gi).map((m) => [m[1], m[2]]),
     htmlLang: (html.match(/<html[^>]*\slang="([^"]+)"/i) ?? [])[1] ?? null,
     jsonLd: all(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi).map((m) => m[1]),
+    robots: g(/<meta name="robots" content="([^"]*)"/i),
+    ogType: g(/<meta property="og:type" content="([^"]*)"/i),
+    /** 出現順の見出しレベル。階層の飛びを見るのに使う */
+    headingLevels: all(/<h([1-6])\b[^>]*>/gi).map((m) => Number(m[1])),
+    /** 画面に出ているパンくずの項目名 */
+    crumbs: (() => {
+      const nav = html.match(/<nav class="crumbs[^"]*"[\s\S]*?<\/nav>/i);
+      if (!nav) return [];
+      return [...nav[0].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)].map((m) =>
+        decode(m[1].replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim(),
+      );
+    })(),
     bytes: Buffer.byteLength(html),
   };
 });
@@ -124,12 +136,26 @@ const descMap = new Map();
 // CJK 文字を 2、それ以外を 1 として数える。
 const width = (s) =>
   [...s].reduce((n, ch) => n + (/[　-鿿＀-￯]/.test(ch) ? 2 : 1), 0);
+const chars = (s) => [...s].length;
+
+// description の目安は 100〜160 文字（幅にすると全角のみで 200〜320）。
+// 上限は Google のデスクトップのスニペットが切れ始めるあたり（全角 120 字 ≒ 幅 240）に置く。
+// 下限は、ページの内容が伝わる最低限として幅 160（全角 80 字）。
+const DESC_MIN_WIDTH = 160;
+const DESC_MAX_WIDTH = 240;
+const TITLE_MAX_WIDTH = 70;
 
 for (const p of pages) {
   if (p.url !== '/404.html') {
-    if (width(p.title) > 70) warn(`${p.url}: title が幅 ${width(p.title)}（長め）`);
-    if (width(p.description) < 80) warn(`${p.url}: description が幅 ${width(p.description)}（短め）`);
-    if (width(p.description) > 200) warn(`${p.url}: description が幅 ${width(p.description)}（長め）`);
+    if (width(p.title) > TITLE_MAX_WIDTH) {
+      warn(`${p.url}: title が幅 ${width(p.title)} / ${chars(p.title)}文字（長め）`);
+    }
+    if (width(p.description) < DESC_MIN_WIDTH) {
+      warn(`${p.url}: description が幅 ${width(p.description)} / ${chars(p.description)}文字（短め）`);
+    }
+    if (width(p.description) > DESC_MAX_WIDTH) {
+      warn(`${p.url}: description が幅 ${width(p.description)} / ${chars(p.description)}文字（長め）`);
+    }
   }
   (titleMap.get(p.title) ?? titleMap.set(p.title, []).get(p.title)).push(p.url);
   (descMap.get(p.description) ?? descMap.set(p.description, []).get(p.description)).push(p.url);
@@ -366,6 +392,157 @@ console.log(`    JS   合計 ${kb(jsBytes)}`);
 console.log(`    画像 合計 ${(imgBytes / 1024 / 1024).toFixed(1)} MB（全バリアント）`);
 if (maxPage.bytes > 100 * 1024) warn(`最大ページが 100KB を超えている`);
 else ok('全ページの HTML が 100KB 未満');
+
+// ------------------------------------------------------- 12. コーポレートSEO
+//
+// docs/08-seo-audit.md で決めた取り決めが崩れていないかを見る。
+// いずれも「壊れても画面には出ないが検索側にだけ効く」たぐいの項目。
+console.log('\n[12] コーポレートSEO');
+let seoIssues = 0;
+
+for (const p of pages) {
+  const is404 = p.url === '/404.html';
+
+  // -- robots --
+  if (!p.robots) {
+    fail(`${p.url}: meta robots がない`);
+    seoIssues++;
+  } else if (is404 && !p.robots.startsWith('noindex')) {
+    fail(`${p.url}: 404 ページは noindex であるべき（現在 "${p.robots}"）`);
+    seoIssues++;
+  } else if (!is404 && p.robots.includes('noindex')) {
+    fail(`${p.url}: 公開ページが noindex になっている`);
+    seoIssues++;
+  }
+
+  // -- og:type --
+  // 常設ページを article にすると「いつの記事か」を問われる。記事は /news/<id>/ だけ。
+  const wantArticle = /^\/news\/[^/]+\/$/.test(p.url) && p.url !== '/news/';
+  const expectType = wantArticle ? 'article' : 'website';
+  if (p.ogType !== expectType) {
+    fail(`${p.url}: og:type が "${p.ogType}"（"${expectType}" であるべき）`);
+    seoIssues++;
+  }
+
+  // -- 見出し階層 --
+  // h1 → h3 のように 1 段飛ばしていないか（装飾目的の見出しタグを検出する）
+  for (let i = 1; i < p.headingLevels.length; i++) {
+    const jump = p.headingLevels[i] - p.headingLevels[i - 1];
+    if (jump > 1) {
+      fail(
+        `${p.url}: 見出しが h${p.headingLevels[i - 1]} → h${p.headingLevels[i]} と飛んでいる`,
+      );
+      seoIssues++;
+    }
+  }
+  if (p.headingLevels.length && p.headingLevels[0] !== 1) {
+    fail(`${p.url}: 最初の見出しが h${p.headingLevels[0]}（h1 で始まるべき）`);
+    seoIssues++;
+  }
+
+  // -- 構造化データ --
+  const ld = p.jsonLd.map((raw) => {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  });
+  const typeOf = (t) => ld.find((d) => d && d['@type'] === t);
+
+  if (!is404) {
+    const org = typeOf('Organization');
+    if (!org) {
+      fail(`${p.url}: Organization の JSON-LD がない`);
+      seoIssues++;
+    } else {
+      // 法人として同定させるための必須項目
+      for (const key of ['name', 'legalName', 'url', 'logo', 'address', 'telephone']) {
+        if (!org[key]) {
+          fail(`${p.url}: Organization に ${key} がない`);
+          seoIssues++;
+        }
+      }
+      if (org.name !== 'Japan World株式会社') {
+        fail(`${p.url}: Organization.name が "${org.name}"`);
+        seoIssues++;
+      }
+      // 細胞浴・エステは JWORLD CO.,LTD の事業。当社の事業として主張しない（docs/07 §2.1）
+      if (org.knowsAbout) {
+        fail(`${p.url}: Organization に knowsAbout が復活している（docs/07 §2.1）`);
+        seoIssues++;
+      }
+    }
+
+    // パンくずは、画面表示と構造化データが一致していること
+    const bc = typeOf('BreadcrumbList');
+    if (p.crumbs.length) {
+      if (!bc) {
+        fail(`${p.url}: 画面にパンくずがあるのに BreadcrumbList がない`);
+        seoIssues++;
+      } else {
+        const ldNames = bc.itemListElement.map((it) => it.name);
+        if (ldNames.join(' > ') !== p.crumbs.join(' > ')) {
+          fail(
+            `${p.url}: パンくずが食い違う\n      画面: ${p.crumbs.join(' > ')}\n      LD  : ${ldNames.join(' > ')}`,
+          );
+          seoIssues++;
+        }
+      }
+    }
+  }
+}
+
+// -- 表記ゆれ --
+// 「JapanWorld株式会社」「Japan World 株式会社」などが本文に混ざっていないか
+const NAME_TYPOS = ['JapanWorld株式会社', 'Japan World 株式会社', 'ジャパンワールド株式会社'];
+for (const p of pages) {
+  for (const typo of NAME_TYPOS) {
+    if (p.html.includes(typo)) {
+      fail(`${p.url}: 社名の表記ゆれ "${typo}"（正式表記は Japan World株式会社）`);
+      seoIssues++;
+    }
+  }
+}
+
+// -- 当社の事業ではないものが混ざっていないか --
+//
+// 「楽気ハウス甲斐路」は別会社へ売却済みで、現在の Japan World株式会社とは関係がない。
+// 当社サイトに掲載すると、他社の施設を当社の事業として示すことになる。
+// 旧URL /甲斐路-home は worker/index.ts で 410 Gone（301 にしない）。
+// 判断の経緯は docs/03-url-migration.md §5 と docs/08-seo-audit.md §3.1。
+//
+// ⚠ www.rakinasu.com（別サイト・本リポジトリの対象外）には、
+//   旧チケット保有者向けのアフターサポートとして甲斐路チケットの案内が残ります
+//   （docs/09-rakinasu-kaiji-ticket.md）。あちらは「すでにお持ちの券が那須で使える」
+//   という利用案内であって、甲斐路を当社の事業として掲載するものではありません。
+//   **その対応を理由に、このコーポレートサイト側の検査を緩めないでください。**
+const SOLD_BUSINESS = ['甲斐路', 'kaiji.co.jp'];
+for (const p of pages) {
+  for (const needle of SOLD_BUSINESS) {
+    if (p.html.includes(needle)) {
+      fail(
+        `${p.url}: "${needle}" が出力に混ざっている。` +
+          `楽気ハウス甲斐路は売却済みで当社の事業ではない（docs/03 §5）`,
+      );
+      seoIssues++;
+    }
+  }
+}
+
+// -- sitemap の lastmod --
+// 未来日の lastmod は無視されるため、当日以前であること
+const todayStr = new Date().toISOString().slice(0, 10);
+for (const m of sitemap.matchAll(/<loc>([^<]+)<\/loc>\s*<lastmod>([^<]+)<\/lastmod>/g)) {
+  if (m[2] > todayStr) {
+    fail(`sitemap: lastmod が未来日 ${m[2]}（${m[1]}）`);
+    seoIssues++;
+  }
+}
+
+if (!seoIssues) {
+  ok('robots / og:type / 見出し階層 / Organization / パンくず一致 / 社名表記 / 甲斐路の不掲載 / lastmod');
+}
 
 // ---------------------------------------------------------------- 結果
 console.log(`\n${'='.repeat(56)}`);
