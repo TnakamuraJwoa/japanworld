@@ -11,7 +11,7 @@ import Picture from '../../components/Picture.astro';
 import PageHero from '../../components/PageHero.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import CtaBand from '../../components/CtaBand.astro';
-import { COMPANY, OPERATORS, pathFor } from '../../data/site';
+import { pathFor } from '../../data/site';
 import { OWN_BUSINESSES, INHOUSE_SALONS } from '../../data/business';
 import { organization, webSite, breadcrumbs } from '../../data/jsonld';
 ---
@@ -78,9 +78,7 @@ import { organization, webSite, breadcrumbs } from '../../data/jsonld';
       <h2 class="section-title reveal" data-delay="1">楽気ハウス那須の館内施設</h2>
       <hr class="rule reveal" data-delay="1" />
       <p class="lede salonsLede reveal" data-delay="2">
-        館内には、ご宿泊とあわせてご利用いただけるサロンがあります。いずれも{COMPANY.name}の事業ではなく、<strong
-          >{OPERATORS.jworld.name}</strong
-        >が運営しています。
+        館内には、ご宿泊とあわせてご利用いただけるサロンがあります。
       </p>
 
       <ul class="salons">
@@ -94,7 +92,6 @@ import { organization, webSite, breadcrumbs } from '../../data/jsonld';
                 <span class="salon__body">
                   <span class="salon__name">{b.title}</span>
                   <span class="salon__lead">{b.lead}</span>
-                  <span class="salon__operator">運営：{OPERATORS.jworld.name}</span>
                   <span class="link-arrow">詳しく見る</span>
                 </span>
               </a>
@@ -179,11 +176,6 @@ import { organization, webSite, breadcrumbs } from '../../data/jsonld';
     margin-top: 1.5rem;
   }
 
-  .salonsLede strong {
-    font-weight: 600;
-    color: var(--ai-800);
-  }
-
   .salons {
     list-style: none;
     padding: 0;
@@ -243,16 +235,6 @@ import { organization, webSite, breadcrumbs } from '../../data/jsonld';
     font-size: var(--step--1);
     color: var(--ink-70);
     line-height: 1.9;
-  }
-
-  .salon__operator {
-    font-size: 0.75rem;
-    color: var(--ink-50);
-    letter-spacing: 0.02em;
-    line-height: 1.7;
-    margin-top: 0.3rem;
-    padding-top: 0.7rem;
-    border-top: 1px solid var(--line-soft);
   }
 
   .salon .link-arrow {
