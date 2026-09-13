@@ -8,7 +8,7 @@
  *
  * 言語切替は廃止（日本語単独サイト）。
  */
-import { pathFor, MAIN_NAV, BUSINESS_SECTION, ROUTE_LABEL, type RouteKey } from '../data/site';
+import { pathFor, MAIN_NAV, BUSINESS_SECTION, ROUTE_LABEL, COMPANY, type RouteKey } from '../data/site';
 
 interface Props {
   /** 表示中のページの絶対パス（例 /business/wellness/） */
@@ -19,8 +19,8 @@ const { path } = Astro.props;
 const businessRoot = pathFor('business');
 const inBusiness = path.startsWith(businessRoot);
 
-/** そのナビ項目が「現在地」か。配下ページでも親を現在地として扱う */
-function isCurrent(key: RouteKey): boolean {
+/** そのナビ項目が「現在いる区画」か。配下ページでも親を現在地として扱う */
+function inSection(key: RouteKey): boolean {
   const href = pathFor(key);
   if (key === 'home') return path === '/';
   if (key === 'business') return inBusiness;
@@ -63,13 +63,36 @@ function isCurrent(key: RouteKey): boolean {
         {
           MAIN_NAV.map((key) => (
             <li>
-              <a href={pathFor(key)} aria-current={isCurrent(key) ? 'page' : undefined}>
+              {/* aria-current="page" はページと完全一致するリンクだけに付ける。
+                  区画の強調は data-section で行う（下層ページや事業の子リンクと二重にならないように） */}
+              <a
+                href={pathFor(key)}
+                aria-current={path === pathFor(key) ? 'page' : undefined}
+                data-section={inSection(key) ? '' : undefined}
+              >
                 {ROUTE_LABEL[key]}
               </a>
+              {/* 事業ページ以外では第2段ナビが出ないため、ドロワー内に事業の一覧を持たせる */}
+              {key === 'business' && (
+                <ul class="site-nav__sub">
+                  {BUSINESS_SECTION.filter((k) => k !== 'business').map((k) => (
+                    <li>
+                      <a href={pathFor(k)} aria-current={path === pathFor(k) ? 'page' : undefined}>
+                        {ROUTE_LABEL[k]}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))
         }
       </ul>
+
+      <a class="site-nav__tel" href={`tel:${COMPANY.telHref}`}>
+        <span class="site-nav__telLabel">お電話でのお問い合わせ</span>
+        <span class="site-nav__telNum">TEL {COMPANY.tel}</span>
+      </a>
     </nav>
   </div>
 
@@ -100,8 +123,19 @@ function isCurrent(key: RouteKey): boolean {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: color-mix(in srgb, var(--paper) 96%, transparent);
     border-bottom: 1px solid var(--line-soft);
+  }
+
+  /* 背景のぼかしは疑似要素に持たせる。
+     backdrop-filter を .site-header 自身に掛けると、
+     ヘッダーが position:fixed の子孫（スマホのドロワー）の
+     配置基準になってしまい、ドロワーがヘッダーの高さに潰れる。 */
+  .site-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: color-mix(in srgb, var(--paper) 96%, transparent);
     backdrop-filter: saturate(140%) blur(8px);
   }
 
@@ -203,18 +237,29 @@ function isCurrent(key: RouteKey): boolean {
   }
 
   /* ---------------- ナビ（スマートフォン） ---------------- */
+  /* ヘッダーの実寸は JavaScript が --header-h に入れる。
+     事業ページのように2段になる場合でも、その下から画面下端までを覆う。 */
   .site-nav {
     position: fixed;
-    inset: 64px 0 0;
+    top: var(--header-h, 64px);
+    right: 0;
+    bottom: 0;
+    left: 0;
     background: var(--paper);
-    padding: 1.5rem var(--gutter) 3rem;
+    padding: 1.25rem var(--gutter) 3rem;
     overflow-y: auto;
     overscroll-behavior: contain;
-    display: none;
+    -webkit-overflow-scrolling: touch;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(-0.5rem);
+    transition: opacity 0.2s ease, transform 0.24s ease, visibility 0.24s;
   }
 
   .site-nav[data-open] {
-    display: block;
+    visibility: visible;
+    opacity: 1;
+    transform: none;
   }
 
   .site-nav__list {
@@ -237,7 +282,8 @@ function isCurrent(key: RouteKey): boolean {
     letter-spacing: 0.04em;
   }
 
-  .site-nav__list a[aria-current='page'] {
+  .site-nav__list a[aria-current='page'],
+  .site-nav__list a[data-section] {
     color: var(--ai-600);
   }
 
@@ -250,6 +296,57 @@ function isCurrent(key: RouteKey): boolean {
     background: var(--gold);
   }
 
+  .site-nav__sub {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 1rem;
+  }
+
+  .site-nav__sub a {
+    min-height: 52px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--ink-70);
+  }
+
+  .site-nav__sub a::before {
+    content: '';
+    width: 0.75rem;
+    height: 1px;
+    margin-inline-end: 0.6em;
+    background: var(--line);
+  }
+
+  .site-nav__tel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    margin-top: 1.75rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--line-soft);
+    border-radius: 2px;
+    text-decoration: none;
+    color: var(--ai-900);
+  }
+
+  .site-nav__telLabel {
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-50);
+  }
+
+  .site-nav__telNum {
+    font-family: var(--serif);
+    font-size: 1.125rem;
+    letter-spacing: 0.06em;
+  }
+
+  /* メニューを開いている間、背面のページはスクロールさせない */
+  :global(html.is-nav-open),
+  :global(html.is-nav-open body) {
+    overflow: hidden;
+  }
+
   /* ---------------- ナビ（PC） ---------------- */
   @media (min-width: 1000px) {
     .navToggle {
@@ -258,11 +355,19 @@ function isCurrent(key: RouteKey): boolean {
 
     .site-nav {
       position: static;
-      display: block;
+      inset: auto;
       background: none;
       padding: 0;
       overflow: visible;
-      inset: auto;
+      visibility: visible;
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+
+    .site-nav__sub,
+    .site-nav__tel {
+      display: none;
     }
 
     .site-nav__list {
@@ -294,7 +399,8 @@ function isCurrent(key: RouteKey): boolean {
     }
 
     .site-nav__list a:hover::before,
-    .site-nav__list a[aria-current='page']::before {
+    .site-nav__list a[aria-current='page']::before,
+    .site-nav__list a[data-section]::before {
       transform: scaleX(1);
     }
 
@@ -348,36 +454,56 @@ function isCurrent(key: RouteKey): boolean {
 </style>
 
 <script>
+  const header = document.querySelector<HTMLElement>('.site-header');
   const toggle = document.querySelector<HTMLButtonElement>('[data-nav-toggle]');
   const nav = document.querySelector<HTMLElement>('[data-nav]');
 
-  if (toggle && nav) {
+  if (header && toggle && nav) {
+    // ドロワーはヘッダーの下端から下を覆う。
+    // 事業ページでは第2段ナビの分だけヘッダーが高くなるため、実寸を測って渡す。
+    const syncHeaderHeight = () => {
+      const h = Math.round(header.getBoundingClientRect().height);
+      document.documentElement.style.setProperty('--header-h', `${h}px`);
+    };
+    syncHeaderHeight();
+
+    new ResizeObserver(syncHeaderHeight).observe(header);
+
+    const isOpen = () => toggle.getAttribute('aria-expanded') === 'true';
+
     const setOpen = (open: boolean) => {
+      if (open) syncHeaderHeight();
       toggle.setAttribute('aria-expanded', String(open));
-      if (open) {
-        nav.setAttribute('data-open', '');
-        document.body.style.overflow = 'hidden';
-      } else {
-        nav.removeAttribute('data-open');
-        document.body.style.overflow = '';
-      }
+      nav.toggleAttribute('data-open', open);
+      // 背面のスクロール固定は html 側で行う。
+      // body だけに overflow を掛けてもスクロールするのはドキュメント要素のため止まらない。
+      document.documentElement.classList.toggle('is-nav-open', open);
     };
 
     toggle.addEventListener('click', () => {
-      setOpen(toggle.getAttribute('aria-expanded') !== 'true');
+      setOpen(!isOpen());
+    });
+
+    // 同一ページ内リンクを押したときは遷移が起きないので、明示的に閉じる
+    nav.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('a')) setOpen(false);
     });
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+      if (e.key === 'Escape' && isOpen()) {
         setOpen(false);
         toggle.focus();
       }
     });
 
     // デスクトップ幅へ戻したときに開閉状態をリセットする
-    const mq = window.matchMedia('(min-width: 1000px)');
-    mq.addEventListener('change', (e) => {
+    window.matchMedia('(min-width: 1000px)').addEventListener('change', (e) => {
       if (e.matches) setOpen(false);
+    });
+
+    // 履歴を戻って復元されたページでメニューが開いたままにならないようにする
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted) setOpen(false);
     });
   }
 </script>

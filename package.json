@@ -16,6 +16,7 @@
     "deploy": "wrangler deploy",
     "verify:redirects": "node --experimental-strip-types --no-warnings scripts/check-redirects.mjs",
     "verify:overflow": "node scripts/check-overflow.mjs",
+    "verify:nav": "node scripts/check-nav.mjs",
     "shots": "node scripts/shots.mjs"
   },
   "dependencies": {

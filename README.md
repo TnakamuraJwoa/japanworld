@@ -42,6 +42,7 @@ $env:PATH = "C:\Program Files\nodejs;$env:PATH"      # PowerShell
 | `npm run verify` | ビルド成果物の検証（SEO・alt・リンク・Wix依存・sitemap ほか） |
 | `npm run verify:redirects` | 旧URLのリダイレクト 153 ケースを検証 |
 | `npm run verify:overflow` | 8つの画面幅で横スクロールが起きていないか検証（Chrome / Edge が必要） |
+| `npm run verify:nav` | スマホ幅でハンバーガーメニューが開閉・タップできるか検証（Chrome / Edge が必要） |
 | `npm run shots` | 全ページのスクリーンショットを撮る（Chrome / Edge が必要） |
 | `npm run deploy` | **本番デプロイ。ユーザーが実行するものです** |
 
@@ -58,6 +59,7 @@ npm run build
 npm run verify
 npm run verify:redirects
 npm run verify:overflow
+npm run verify:nav
 npx wrangler deploy --dry-run
 ```
 
@@ -114,6 +116,7 @@ scripts/
   check-all.mjs         ビルド成果物の検証
   check-redirects.mjs   リダイレクト検証
   check-overflow.mjs    横スクロール検証
+  check-nav.mjs         スマホ版メニューの開閉検証
   shots.mjs             スクリーンショット
   lib/preview.mjs       検証用の静的サーバー
 worker/index.ts         Cloudflare Worker（apex→www・旧URL 301・多言語 301・410・404・ヘッダー）
