@@ -2,7 +2,7 @@
 
 発生報告: 2026-09-13
 対象: `https://www.japanworld.co.jp/`（本番）
-修正: ローカルで実施・検証済み。**デプロイするまで本番には反映されません。**
+修正: `55fd8ca`（ビルドの冪等化は `6658566`）。**本番反映済み・検証済み**（§8）。
 
 ---
 
@@ -155,13 +155,136 @@ CSP がそれを遮断しているため **計測は一切記録されていな�
 
 ---
 
-## 7. 反映に必要な作業
+## 7. 反映の手順
 
 ```bash
 npm run build      # dist と worker/csp-hashes.generated.ts を生成
 npm run verify     # [13] まで通ること
-npm run deploy     # ← 本番反映（ご指示があるまで実行しません）
+npm run deploy     # 本番反映
 ```
 
-デプロイ後、`https://www.japanworld.co.jp/` のレスポンスヘッダーの `Content-Security-Policy` に
-`'sha256-…'` が 2 つ含まれていること、スマートフォンでメニューが開くことをご確認ください。
+**必ずこの順で。** Worker は `csp-hashes.generated.ts` をバンドルするため、
+`astro build` だけを走らせて deploy すると CSP が古いハッシュのままになる。
+`npm run verify` の [13] がその取り違えを検出する。
+
+---
+
+## 8. 本番の検証結果（2026-09-13）
+
+`https://www.japanworld.co.jp/` を Chrome（390px・タッチ・DPR2）で実測。
+
+### 8.1 CSP
+
+```
+script-src 'self' 'sha256-aMXvDcDLfQFhPvzV5B2hPm8ffE/HuDXIndy5gNvxViE='
+                  'sha256-wSa0hyPf3VnJFanSG2s099Mj49N7zCmmoB0xF2cPymE='
+```
+
+| 確認 | 結果 |
+|---|---|
+| ハッシュ 2 本のみ | ✓（`worker/csp-hashes.generated.ts` と完全一致） |
+| `'unsafe-inline'` が script-src に無い | ✓ 0 件 |
+| `'unsafe-eval'` が無い | ✓ 0 件 |
+| 解析ホストを足していない | ✓ `cloudflareinsights` 0 件 |
+
+### 8.2 各ページ（8ページすべて合格）
+
+`/` `/business/` `/business/hospitality/` `/business/wellness/` `/business/beauty/`
+`/company/` `/news/` `/contact/`
+
+| 確認 | 結果 |
+|---|---|
+| メニューの開閉 | ✓ `aria-expanded` が false → true → false、パネル高 666〜715px |
+| スクロール表示 JS | ✓ `html[data-reveal]` が付き、`.reveal` が可視化される |
+| 自サイト由来の CSP エラー | ✓ 0 件 |
+| その他の JS エラー | ✓ 0 件 |
+| title / h1 / canonical / robots / JSON-LD | ✓ ローカルのビルドと一致 |
+
+### 8.3 ステータスコード
+
+`npm run verify:redirects https://www.japanworld.co.jp` … **172 / 172 通過**。
+
+| 種別 | 例 | 結果 |
+|---|---|---|
+| 200 | 主要 9 ページ + `/sitemap.xml` + `/robots.txt` | ✓ |
+| 301 | `/rakihouse` `/companyprofile` `/about-5`（`#membership` 付き）`/en/room` ほか | ✓ |
+| 404 | `/en/news` `/zh/business/` `/vi/whatever/deep/` `/nope/` | ✓ |
+| 410 | `/甲斐路-home` `/blog-feed.xml` `/_api/*` `/_files/*` | ✓ |
+| 405 | `POST /` | ✓ |
+
+---
+
+## 9. ★ 本番で見つかった別件（今回は変更していません）
+
+いずれも**このリポジトリのコードでは直せない**、Cloudflare 側の設定に起因するものです。
+DNS 変更は行わないというご指示のため、報告にとどめています。
+
+### 9.1 apex が Worker を通っていない → 実際は 2 ホップ
+
+```
+https://japanworld.co.jp/rakihouse
+  → 301 https://www.japanworld.co.jp/rakihouse            ← Worker ではない何かが返している
+  → 301 https://www.japanworld.co.jp/business/hospitality/ ← ここから Worker
+  → 200
+```
+
+`worker/index.ts` は apex からの旧URLを 1 ホップで最終URLへ送るように書いてあり、
+www 宛なら実際に 1 ホップです（`https://www.japanworld.co.jp/rakihouse` → 1 回）。
+しかし **apex（`japanworld.co.jp`）が Worker に割り当てられていない**ため、
+先に別の仕組みが www へ 301 し、そのあと Worker が働いて 2 ホップになっています。
+
+`docs/01` §7 のとおり apex の A レコードは `23.236.62.147`（Wix の apex 転送用IP）のままです。
+`wrangler.jsonc` の `routes` もコメントアウトされたままで、apex は Worker に向いていません。
+
+→ apex を Worker に向ければ 1 ホップになります。DNS 変更を伴うため未実施。
+
+### 9.2 apex の http（ポート80）が 522 で開けない
+
+```
+http://japanworld.co.jp/           → 522（Cloudflare のエラー）
+http://japanworld.co.jp/rakihouse  → 522
+```
+
+https は正常（301 → www）、`http://www.japanworld.co.jp/` も正常（301）。
+**apex の平文 http だけが落ちています。** 3 回試して毎回 522 でした。
+
+`japanworld.co.jp` と直接入力した利用者や、`http://japanworld.co.jp/…` の古いリンクから
+来た人がエラーページに当たります。9.1 と同じく apex の向き先の問題です。
+
+### 9.3 robots.txt に Cloudflare が AI クローラーのブロックを注入している
+
+リポジトリの `public/robots.txt` は 4 行だけですが、本番は Cloudflare の
+「Cloudflare Managed content」が差し込まれ、次が追加されています。
+
+```
+User-agent: *
+Content-Signal: search=yes,ai-train=no,use=reference
+Allow: /
+
+User-agent: GPTBot            Disallow: /
+User-agent: ClaudeBot         Disallow: /
+User-agent: CCBot             Disallow: /
+User-agent: Google-Extended   Disallow: /
+User-agent: Amazonbot / Applebot-Extended / Bytespider / meta-externalagent  Disallow: /
+```
+
+**検索への影響はありません。** Googlebot は `Allow: /`、`Content-Signal: search=yes` で、
+`Google-Extended` は AI 学習用であって検索インデックスには使われません。
+`Sitemap:` の行もそのまま残っています。
+
+意図した設定であれば、そのままで問題ありません。意図していない場合は
+Cloudflare ダッシュボードの AI クローラー制御で解除できます。
+
+### 9.4 Cloudflare Web Analytics のビーコン（方針どおり遮断のまま）
+
+```
+Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/…'
+violates the following Content Security Policy directive: "script-src 'self' 'sha256-…'"
+```
+
+全ページのコンソールに 1 件ずつ出ますが、**サイトの機能には影響しません。**
+遮断されているのは計測用ビーコンだけで、メニュー・スクロール表示・リンク・
+画像・CSS はすべて正常に動作することを 8 ページで確認済みです（§8.2）。
+今回の方針どおり、CSP に解析ホストは追加していません。
+計測が不要であれば、Cloudflare ダッシュボードで自動注入を OFF にすると
+このエラー自体が消えます。
