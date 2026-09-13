@@ -1,0 +1,56 @@
+---
+/**
+ * お知らせ一覧のページ送り。
+ *
+ * 1ページ目は /news/、2ページ目以降は /news/page/2/ のようになる。
+ * ページが1つしかないときは何も描画しない。
+ */
+import { pathFor } from '../data/site';
+
+interface Props {
+  current: number;
+  total: number;
+}
+const { current, total } = Astro.props;
+
+const base = pathFor('news');
+const hrefFor = (n: number) => (n === 1 ? base : `${base}page/${n}/`);
+
+const pages = Array.from({ length: total }, (_, i) => i + 1);
+---
+
+{
+  total > 1 && (
+    <nav aria-label="お知らせのページ送り">
+      <ul class="pagination">
+        {current > 1 && (
+          <li>
+            <a href={hrefFor(current - 1)} rel="prev">
+              前へ
+            </a>
+          </li>
+        )}
+        {pages.map((n) =>
+          n === current ? (
+            <li>
+              <span aria-current="page">{n}</span>
+            </li>
+          ) : (
+            <li>
+              <a href={hrefFor(n)} aria-label={`${n}ページ目`}>
+                {n}
+              </a>
+            </li>
+          ),
+        )}
+        {current < total && (
+          <li>
+            <a href={hrefFor(current + 1)} rel="next">
+              次へ
+            </a>
+          </li>
+        )}
+      </ul>
+    </nav>
+  )
+}

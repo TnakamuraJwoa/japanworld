@@ -1,0 +1,296 @@
+---
+/**
+ * 会社情報。
+ *
+ * ⚠ 沿革（設立年・開業年）と代表メッセージ、企業理念の成文は、
+ *   現行サイト・関連サイトのいずれにも記載がないため作成していません。
+ *   資料をいただければ、このページに節を追加します。
+ */
+import Base from '../../layouts/Base.astro';
+import Picture from '../../components/Picture.astro';
+import PageHero from '../../components/PageHero.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import { COMPANY, COMPANY_BUSINESS, EXTERNAL, FEATURES, OPERATORS, pathFor } from '../../data/site';
+import { OWN_BUSINESSES, INHOUSE_SALONS } from '../../data/business';
+import { organization, webSite, breadcrumbs } from '../../data/jsonld';
+
+const profile: { label: string; value: string; href?: string }[] = [
+  { label: '商号', value: COMPANY.name },
+  { label: '英文表記', value: COMPANY.nameEn },
+  { label: '代表取締役', value: COMPANY.ceo },
+  { label: '本社所在地', value: `〒${COMPANY.postal}　${COMPANY.addressFull}` },
+  { label: '電話番号', value: COMPANY.tel, href: `tel:${COMPANY.telHref}` },
+  { label: 'メールアドレス', value: COMPANY.email, href: `mailto:${COMPANY.email}` },
+  { label: '資本金', value: COMPANY.capital },
+];
+
+const related = [
+  {
+    title: '楽気ハウス那須 ホテル公式サイト',
+    body: '当社が運営するリゾートホテルの公式サイトです。施設のご紹介、季節の特集、宿泊のご予約はこちらから。',
+    href: EXTERNAL.hotelSite,
+  },
+  {
+    title: 'JWCCS 会員専用予約',
+    body: '楽気ハウス会員の方の宿泊予約システムです。ご利用にはJWCCSへのご登録とログインが必要です。',
+    href: EXTERNAL.members,
+  },
+  {
+    title: '細胞浴SALON 太古の甕 公式サイト',
+    body: '細胞浴サロンの公式サイトです。天然鉱石「樹紋石」と細胞浴について詳しくご紹介しています。',
+    href: EXTERNAL.saibouyoku,
+  },
+  ...(FEATURES.nftLink
+    ? [
+        {
+          title: 'JW NFT Platform',
+          body: '楽気ハウスNFT宿泊券のプラットフォームです。',
+          href: EXTERNAL.nft,
+        },
+      ]
+    : []),
+];
+---
+
+<Base
+  title="会社情報"
+  description="Japan World株式会社の会社概要。商号、代表取締役、本社所在地、資本金、事業内容をご案内します。東京都台東区上野に本社を置き、栃木県・那須高原でリゾートホテル「楽気ハウス那須」を運営しています。"
+  path={pathFor('company')}
+  ogImage="lobby/atrium"
+  jsonLd={[webSite(), organization(), breadcrumbs([{ key: 'company', name: '会社情報' }])]}
+>
+  <PageHero
+    eyebrow="Company"
+    title="会社情報"
+    lead="東京・上野に本社を置き、栃木県・那須高原でリゾートホテル「楽気ハウス那須」を運営しています。"
+  />
+  <Breadcrumbs trail={['company']} />
+
+  {/* ============ 私たちについて ============ */}
+  <section class="section">
+    <div class="wrap">
+      <div class="split reveal">
+        <div class="split__text">
+          <p class="eyebrow">About Us</p>
+          <h2 class="section-title">私たちについて</h2>
+          <hr class="rule" />
+          <p>
+            {COMPANY.name}は、栃木県・那須高原のリゾートホテル<strong>「楽気ハウス那須」</strong
+            >を運営しています。全26室、温泉の大浴場と露天風呂、最大200人規模のコンベンションホールを備えた、会員制のリゾートホテルです。
+          </p>
+          <p>
+            その館内には、天然鉱石を用いた温浴サロン「太古の甕」と、大人の女性のためのエステサロン「RICHIA」を併設しています。いずれも<strong
+              >からだを整え、気持ちをほどく時間をつくる</strong
+            >という一点でつながっています。
+          </p>
+          <p>
+            サービスを数多くそろえることよりも、一組ずつに向き合える規模で続けることを大切にしています。
+          </p>
+          <p class="btn-row aboutBtns">
+            <a class="btn btn--ghost" href={pathFor('business')}>事業紹介を見る</a>
+          </p>
+        </div>
+        <figure class="figure">
+          <div class="zoomable">
+            <Picture name="lobby/atrium" sizes="(min-width: 860px) 46vw, 92vw" ratio="4/3" />
+          </div>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  {/* ============ 会社概要 ============ */}
+  <section class="section section--paper">
+    <div class="wrap-narrow">
+      <p class="eyebrow reveal">Profile</p>
+      <h2 class="section-title reveal" data-delay="1">会社概要</h2>
+      <hr class="rule reveal" data-delay="1" />
+
+      <dl class="dl profileDl reveal" data-delay="2">
+        {
+          profile.map((row) => (
+            <div class="dl__row">
+              <dt>{row.label}</dt>
+              <dd>{row.href ? <a href={row.href}>{row.value}</a> : row.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </section>
+
+  {/* ============ 事業内容 ============ */}
+  <section class="section">
+    <div class="wrap-narrow">
+      <p class="eyebrow reveal">Business</p>
+      <h2 class="section-title reveal" data-delay="1">事業内容</h2>
+      <hr class="rule reveal" data-delay="1" />
+
+      <ul class="ticks businessList reveal" data-delay="2">
+        {COMPANY_BUSINESS.map((b) => <li>{b}</li>)}
+      </ul>
+
+      <div class="bizLinks reveal" data-delay="2">
+        <p class="bizLinks__heading">当社が運営している事業</p>
+        <ul class="bizLinks__list">
+          {
+            OWN_BUSINESSES.map((b) => (
+              <li>
+                <a class="link-arrow" href={pathFor(b.key)}>
+                  {b.title}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+
+        <p class="bizLinks__heading bizLinks__heading--sub">楽気ハウス那須の館内施設</p>
+        <p class="bizLinks__note">
+          いずれも当社の事業ではなく、{OPERATORS.jworld.name}が運営しています。
+        </p>
+        <ul class="bizLinks__list">
+          {
+            INHOUSE_SALONS.map((b) => (
+              <li>
+                <a class="link-arrow" href={pathFor(b.key)}>
+                  {b.title}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  {/* ============ 関連サイト ============ */}
+  <section class="section section--paper">
+    <div class="wrap">
+      <p class="eyebrow reveal">Related Sites</p>
+      <h2 class="section-title reveal" data-delay="1">関連サイト</h2>
+      <hr class="rule reveal" data-delay="1" />
+      <p class="lede relatedLede reveal" data-delay="2">
+        当社および館内サロンの各サービスのサイトです。運営会社は各サイトをご確認ください。いずれも新しいタブで開きます。
+      </p>
+
+      <ul class="linkCards reveal" data-delay="2">
+        {
+          related.map((r) => (
+            <li>
+              <a class="linkCard ext" href={r.href} target="_blank" rel="noopener">
+                <span class="linkCard__title">{r.title}</span>
+                <span class="linkCard__text">{r.body}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <CtaBand />
+</Base>
+
+<style>
+  .aboutBtns {
+    margin-top: 1.75rem;
+  }
+
+  .profileDl {
+    margin-top: clamp(1.75rem, 4vw, 2.25rem);
+  }
+
+  .businessList {
+    margin-top: clamp(1.75rem, 4vw, 2.25rem);
+    line-height: 2;
+  }
+
+  .bizLinks {
+    margin-top: clamp(2.25rem, 5vw, 3rem);
+    border-top: 1px solid var(--line);
+    padding-top: 1.75rem;
+  }
+
+  .bizLinks__heading {
+    font-size: var(--step--1);
+    font-weight: 600;
+    color: var(--ai-800);
+    letter-spacing: 0.06em;
+  }
+
+  .bizLinks__heading--sub {
+    margin-top: 2rem;
+  }
+
+  .bizLinks__note {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--ink-50);
+    line-height: 1.8;
+  }
+
+  .bizLinks__list {
+    list-style: none;
+    padding: 0;
+    margin: 0.75rem 0 0;
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .bizLinks__list a {
+    min-height: 44px;
+    display: inline-flex;
+    justify-self: start;
+  }
+
+  .relatedLede {
+    margin-top: 1.5rem;
+  }
+
+  .linkCards {
+    list-style: none;
+    padding: 0;
+    margin: clamp(1.75rem, 4vw, 2.5rem) 0 0;
+    display: grid;
+    gap: clamp(1rem, 2.5vw, 1.5rem);
+  }
+
+  @media (min-width: 760px) {
+    .linkCards {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .linkCard {
+    display: grid;
+    gap: 0.6rem;
+    height: 100%;
+    background: var(--white);
+    border: 1px solid var(--line-soft);
+    padding: clamp(1.25rem, 2.5vw, 1.75rem);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .linkCard:hover {
+    border-color: var(--ai-100);
+    box-shadow: var(--shadow);
+    color: inherit;
+  }
+
+  .linkCard__title {
+    font-family: var(--serif);
+    font-size: var(--step-1);
+    font-weight: 600;
+    color: var(--ai-900);
+    line-height: 1.5;
+  }
+
+  .linkCard__text {
+    font-size: var(--step--1);
+    color: var(--ink-70);
+    line-height: 1.9;
+  }
+</style>

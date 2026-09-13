@@ -1,47 +1,48 @@
 import type { APIRoute } from 'astro';
-import { SITE, LANGS, LANG_META, ROUTE_KEYS, pathFor } from '../data/site';
+import { SITE, ROUTE_KEYS, pathFor } from '../data/site';
+import { getAllNewsIds, getTotalPages } from '../data/news';
 
 /**
- * 48 URL（4言語 × 12ページ）を 1 本の sitemap にまとめ、
- * 各 URL に xhtml:link の hreflang を付ける。
- * Wix は言語ごとに 4 本の sitemap を吐き、hreflang は sitemap 側に無かった。
+ * 日本語サイトのみの sitemap。
+ * 多言語（/en/ /zh/ /vi/）は廃止し、worker/index.ts で日本語版へ 301 している。
  */
 export const GET: APIRoute = () => {
   const lastmod = new Date().toISOString().slice(0, 10);
 
-  const urls = LANGS.flatMap((lang) =>
-    ROUTE_KEYS.map((route) => {
-      const loc = new URL(pathFor(lang, route), SITE.origin).href;
-      const alternates = [
-        ...LANGS.map(
-          (l) =>
-            `    <xhtml:link rel="alternate" hreflang="${LANG_META[l].hreflang}" href="${new URL(
-              pathFor(l, route),
-              SITE.origin,
-            ).href}"/>`,
-        ),
-        `    <xhtml:link rel="alternate" hreflang="x-default" href="${new URL(
-          pathFor('ja', route),
-          SITE.origin,
-        ).href}"/>`,
-      ].join('\n');
+  const paths: { loc: string; priority: string; changefreq: string }[] = [];
 
-      // トップと主要導線を高めに
-      const priority =
-        route === 'home' ? '1.0' : ['hotel', 'booking', 'membership', 'access'].includes(route) ? '0.8' : '0.6';
+  for (const route of ROUTE_KEYS) {
+    paths.push({
+      loc: pathFor(route),
+      priority: route === 'home' ? '1.0' : route === 'business' ? '0.9' : '0.8',
+      changefreq: route === 'news' ? 'weekly' : 'monthly',
+    });
+  }
 
-      return `  <url>
-    <loc>${loc}</loc>
+  // お知らせ一覧の2ページ目以降
+  const totalPages = getTotalPages();
+  for (let p = 2; p <= totalPages; p++) {
+    paths.push({ loc: `${pathFor('news')}page/${p}/`, priority: '0.4', changefreq: 'weekly' });
+  }
+
+  // お知らせ詳細
+  for (const id of getAllNewsIds()) {
+    paths.push({ loc: `${pathFor('news')}${id}/`, priority: '0.6', changefreq: 'yearly' });
+  }
+
+  const urls = paths
+    .map(
+      ({ loc, priority, changefreq }) => `  <url>
+    <loc>${new URL(loc, SITE.origin).href}</loc>
     <lastmod>${lastmod}</lastmod>
-    <changefreq>monthly</changefreq>
+    <changefreq>${changefreq}</changefreq>
     <priority>${priority}</priority>
-${alternates}
-  </url>`;
-    }),
-  ).join('\n');
+  </url>`,
+    )
+    .join('\n');
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls}
 </urlset>
 `;

@@ -1,26 +1,29 @@
 ---
-import { pathFor, type Lang, type RouteKey } from '../data/site';
-import type { Dict } from '../i18n/types';
+import { pathFor, ROUTE_LABEL, type RouteKey } from '../data/site';
+
+export type Crumb = { name: string; href?: string };
 
 interface Props {
-  lang: Lang;
-  t: Dict;
-  /** ホームを除いた経路 */
-  trail: RouteKey[];
+  /** ホームを除いた経路。RouteKey でも、任意の名前＋リンクでも渡せる */
+  trail: (RouteKey | Crumb)[];
 }
-const { lang, t, trail } = Astro.props;
+const { trail } = Astro.props;
+
+const items: Crumb[] = trail.map((c) =>
+  typeof c === 'string' ? { name: ROUTE_LABEL[c], href: pathFor(c) } : c,
+);
 ---
 
-<nav class="crumbs wrap" aria-label="Breadcrumb">
+<nav class="crumbs wrap" aria-label="パンくずリスト">
   <ol>
-    <li><a href={pathFor(lang, 'home')}>{t.ui.breadcrumbHome}</a></li>
+    <li><a href={pathFor('home')}>ホーム</a></li>
     {
-      trail.map((key, i) =>
-        i === trail.length - 1 ? (
-          <li aria-current="page">{t.nav[key]}</li>
+      items.map((item, i) =>
+        i === items.length - 1 || !item.href ? (
+          <li aria-current="page">{item.name}</li>
         ) : (
           <li>
-            <a href={pathFor(lang, key)}>{t.nav[key]}</a>
+            <a href={item.href}>{item.name}</a>
           </li>
         ),
       )

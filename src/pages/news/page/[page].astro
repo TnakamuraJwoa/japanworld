@@ -1,0 +1,61 @@
+---
+/**
+ * お知らせ一覧の2ページ目以降。
+ * 記事が NEWS_PER_PAGE 件を超えたときだけ生成される。
+ */
+import Base from '../../../layouts/Base.astro';
+import PageHero from '../../../components/PageHero.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import NewsList from '../../../components/NewsList.astro';
+import Pagination from '../../../components/Pagination.astro';
+import CtaBand from '../../../components/CtaBand.astro';
+import { pathFor } from '../../../data/site';
+import { getNews, getTotalPages, NEWS_PER_PAGE } from '../../../data/news';
+import { organization, webSite, breadcrumbsRaw } from '../../../data/jsonld';
+
+export function getStaticPaths() {
+  const total = getTotalPages();
+  // 1ページ目は /news/ が担当するので 2 から
+  return Array.from({ length: Math.max(0, total - 1) }, (_, i) => ({
+    params: { page: String(i + 2) },
+    props: { page: i + 2 },
+  }));
+}
+
+const { page } = Astro.props;
+const { contents } = getNews({ limit: NEWS_PER_PAGE, offset: (page - 1) * NEWS_PER_PAGE });
+const totalPages = getTotalPages();
+const path = `${pathFor('news')}page/${page}/`;
+---
+
+<Base
+  title={`お知らせ（${page}ページ目）`}
+  description={`Japan World株式会社からのお知らせ一覧の${page}ページ目です。`}
+  path={path}
+  ogImage="lobby/atrium"
+  jsonLd={[
+    webSite(),
+    organization(),
+    breadcrumbsRaw([
+      { name: 'お知らせ', path: pathFor('news') },
+      { name: `${page}ページ目`, path },
+    ]),
+  ]}
+>
+  <PageHero eyebrow="News" title="お知らせ" />
+  <Breadcrumbs
+    trail={[
+      { name: 'お知らせ', href: pathFor('news') },
+      { name: `${page}ページ目` },
+    ]}
+  />
+
+  <section class="section">
+    <div class="wrap-narrow">
+      <NewsList items={contents} />
+      <Pagination current={page} total={totalPages} />
+    </div>
+  </section>
+
+  <CtaBand />
+</Base>

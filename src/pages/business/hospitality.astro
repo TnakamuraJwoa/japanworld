@@ -1,0 +1,491 @@
+---
+/**
+ * ホスピタリティ事業 — Resort Hotel 楽気ハウス那須
+ *
+ * ⚠ 宿泊の在庫・料金・季節の情報は www.rakinasu.com が正典。
+ *   このページは「Japan World が運営している事業」としての紹介にとどめ、
+ *   予約と最新情報はホテル公式サイトへ送客する。
+ */
+import Base from '../../layouts/Base.astro';
+import Picture from '../../components/Picture.astro';
+import PageHero from '../../components/PageHero.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import { HOTEL, COMPANY, EXTERNAL, BOOKING_MANUAL, pathFor } from '../../data/site';
+import { getBusiness } from '../../data/business';
+import { organization, webSite, lodgingBusiness, breadcrumbs } from '../../data/jsonld';
+
+const biz = getBusiness('hospitality');
+
+const facts: [string, string][] = [
+  ['名称', HOTEL.name],
+  ['所在地', `〒${HOTEL.postal}　${HOTEL.addressFull}`],
+  ['客室数', `全${HOTEL.rooms}室`],
+  ['温泉', '大浴場（男女）・露天風呂（男女）'],
+  ['宴会場', `大宴会場・中宴会場・小宴会場（最大${HOTEL.banquetCapacity}人規模）`],
+  ['館内サロン', '細胞浴SALON 太古の甕 ／ Esthetic Salon RICHIA'],
+  ['駐車場', `${HOTEL.parking}台`],
+  ['電話', `${HOTEL.tel}（受付 ${HOTEL.telHours}）`],
+  ['FAX', HOTEL.fax],
+];
+
+/** 館内のご案内。現行サイトの記載に基づく。 */
+const facilities = [
+  {
+    title: '客室',
+    image: 'rooms/window-view' as const,
+    body: 'スタイリッシュなインテリアと和が調和したクラシックルーム。森を感じる心地良さにこだわりました。',
+  },
+  {
+    title: '温泉・大浴場',
+    image: 'spa/daiyokujo-wide' as const,
+    body: '壁はこだわりの藍染にし、まるで和室にいるようにくつろげる大浴場を実現しました。露天風呂もご用意しています。',
+  },
+  {
+    title: 'ダイニング',
+    image: 'dining/restaurant-raki' as const,
+    body: '厳選された食材をふんだんに使用した、シェフ自慢の一品を。落ち着いた雰囲気の中でお食事をお楽しみください。',
+  },
+  {
+    title: '宴会場',
+    image: 'banquet/hall' as const,
+    body: `${HOTEL.banquetCapacity}人規模のイベントが可能な大宴会場をご用意しております。少人数のミーティングにもご利用いただけます。`,
+  },
+];
+
+/** 会員権の要点。現行サイト /about-5（日本語版）の記載に基づく。 */
+const membership: [string, string][] = [
+  ['方式', 'タイムシェアー方式'],
+  ['宿泊日数', '年間合計12泊、6泊もしくは3泊の宿泊券'],
+  ['年会費', '契約日より1年間　110,000円（税込）もしくは 55,000円（税込）'],
+  ['登録管理手数料', '110,000円（税込）もしくは 55,000円（税込）'],
+  ['ご予約', '会員専用予約システム JWCCS にて先着順'],
+  ['共有サービス', '駐車場・浴場・脱衣場は無料でご利用いただけます'],
+];
+---
+
+<Base
+  title="ホスピタリティ｜Resort Hotel 楽気ハウス那須"
+  description="Japan World株式会社が那須高原で運営するリゾートホテル「楽気ハウス那須」。全26室、温泉大浴場と露天風呂、200人規模のコンベンションホールを備えています。会員制ですが一般のお客様もご宿泊いただけます。"
+  path={pathFor('hospitality')}
+  ogImage="hotel/exterior"
+  preloadImage={{ name: biz.hero, sizes: '100vw' }}
+  jsonLd={[
+    webSite(),
+    organization(),
+    lodgingBusiness(),
+    breadcrumbs([
+      { key: 'business', name: '事業紹介' },
+      { key: 'hospitality', name: 'ホスピタリティ' },
+    ]),
+  ]}
+>
+  <PageHero
+    eyebrow="Hospitality"
+    title="Resort Hotel 楽気ハウス那須"
+    lead="栃木県・那須高原で運営するリゾートホテル。全26室、温泉の大浴場と露天風呂、館内サロンを備えています。"
+    image={biz.hero}
+    priority
+  />
+  <Breadcrumbs trail={['business', 'hospitality']} />
+
+  {/* ============ 事業概要 ============ */}
+  <section class="section">
+    <div class="wrap">
+      <div class="split reveal">
+        <div class="split__text">
+          <p class="eyebrow">Overview</p>
+          <h2 class="section-title">事業概要</h2>
+          <hr class="rule" />
+          <p>
+            「楽気ハウス那須」は、{COMPANY.name}が那須高原で運営するリゾートホテルです。<strong
+              >会員制のホテルとして運営しながら、一般のお客様のご宿泊も承っています。</strong
+            >
+          </p>
+          <p>
+            ゆとりある全{HOTEL.rooms}室を配し、全館をゲストの占有空間とすることで、高いプライベート性を提供しています。温泉の大浴場と露天風呂、レストラン＆バー、{
+              HOTEL.banquetCapacity
+            }人規模のコンベンションホールを備えています。
+          </p>
+          <p>
+            館内には、細胞浴SALON「太古の甕」と Esthetic Salon RICHIA を併設しており、ご宿泊とあわせてご利用いただけます。
+          </p>
+          <p class="btn-row overviewBtns">
+            <a class="btn btn--primary ext" href={EXTERNAL.hotelSite} target="_blank" rel="noopener">
+              ホテル公式サイトを見る
+            </a>
+          </p>
+        </div>
+        <figure class="figure">
+          <div class="zoomable">
+            <Picture name="hotel/exterior" sizes="(min-width: 860px) 46vw, 92vw" ratio="4/3" />
+          </div>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  {/* ============ 施設概要 ============ */}
+  <section class="section section--paper">
+    <div class="wrap-narrow">
+      <p class="eyebrow reveal">Facility</p>
+      <h2 class="section-title reveal" data-delay="1">施設の概要</h2>
+      <hr class="rule reveal" data-delay="1" />
+
+      <dl class="dl factsDl reveal" data-delay="2">
+        {
+          facts.map(([label, value]) => (
+            <div class="dl__row">
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+
+      <p class="btn-row factsBtns reveal" data-delay="2">
+        <a class="btn btn--ghost ext" href={HOTEL.mapUrl} target="_blank" rel="noopener">
+          地図で見る
+        </a>
+      </p>
+    </div>
+  </section>
+
+  {/* ============ 館内のご案内 ============ */}
+  <section class="section">
+    <div class="wrap">
+      <p class="eyebrow reveal">Inside</p>
+      <h2 class="section-title reveal" data-delay="1">館内のご案内</h2>
+      <hr class="rule reveal" data-delay="1" />
+      <p class="lede facilitiesLede reveal" data-delay="2">
+        客室から温泉、食事、宴会場まで。那須の自然のなかで過ごす時間を、館内のすべてが支えます。
+      </p>
+
+      <ul class="facilities">
+        {
+          facilities.map((f, i) => (
+            <li class="reveal" data-delay={String(Math.min(i, 3))}>
+              <article class="card">
+                <div class="card__media zoomable">
+                  <Picture
+                    name={f.image}
+                    sizes="(min-width: 1000px) 24vw, (min-width: 640px) 46vw, 92vw"
+                    ratio="4/3"
+                  />
+                </div>
+                <div class="card__body">
+                  <h3 class="card__title">{f.title}</h3>
+                  <p class="card__text">{f.body}</p>
+                </div>
+              </article>
+            </li>
+          ))
+        }
+      </ul>
+
+      <p class="facilitiesNote small muted reveal">
+        館内の詳しいご紹介、季節の特集、宿泊プランはホテル公式サイトに掲載しています。
+      </p>
+      <p class="btn-row reveal">
+        <a class="btn btn--ghost ext" href={EXTERNAL.hotelSite} target="_blank" rel="noopener">
+          楽気ハウス那須 ホテル公式サイト
+        </a>
+      </p>
+    </div>
+  </section>
+
+  {/* ============ 宿泊のご予約 ============ */}
+  <section class="section section--paper">
+    <div class="wrap">
+      <p class="eyebrow reveal">Reservation</p>
+      <h2 class="section-title reveal" data-delay="1">宿泊のご予約</h2>
+      <hr class="rule reveal" data-delay="1" />
+
+      <ul class="routes">
+        <li class="route reveal" data-delay="1">
+          <p class="route__label">一般のお客様</p>
+          <h3 class="route__title">宿泊予約サイトから</h3>
+          <p class="route__body">
+            会員制のホテルですが、一般のお客様もご宿泊いただけます。空室状況・料金のご確認とご予約は、宿泊予約サイトから承っています。
+          </p>
+          <p class="btn-row">
+            <a class="btn btn--primary ext" href={EXTERNAL.booking} target="_blank" rel="noopener">
+              空室・料金を見る
+            </a>
+          </p>
+          <p class="route__tel">
+            お電話でも承ります　<a href={`tel:${HOTEL.telHref}`}>{HOTEL.tel}</a>（受付 {
+              HOTEL.telHours
+            }）
+          </p>
+        </li>
+
+        <li class="route reveal" data-delay="2">
+          <p class="route__label">楽気ハウス会員の方</p>
+          <h3 class="route__title">JWCCS からご予約</h3>
+          <p class="route__body">
+            会員の方は、会員専用予約システム「JWCCS（ジャパンワールド コンシェルジュ クラブ
+            サービス）」からご予約ください。ご利用にはご登録とログインが必要です。
+          </p>
+          <p class="btn-row">
+            <a class="btn btn--ghost ext" href={EXTERNAL.members} target="_blank" rel="noopener">
+              JWCCS にログイン
+            </a>
+          </p>
+          <p class="route__tel">
+            <a href={BOOKING_MANUAL.href}>宿泊予約マニュアル（PDF・約1.2MB）</a>
+          </p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  {/* ============ 会員権 ============ */}
+  <section class="section">
+    <div class="wrap-narrow">
+      <p class="eyebrow reveal">Membership</p>
+      <h2 class="section-title reveal" data-delay="1">楽気ハウス会員権</h2>
+      <hr class="rule reveal" data-delay="1" />
+      <p class="lede membershipLede reveal" data-delay="2">
+        タイムシェアー方式で、年間の宿泊日数が約束される会員権です。
+      </p>
+
+      <dl class="dl membershipDl reveal" data-delay="2">
+        {
+          membership.map(([label, value]) => (
+            <div class="dl__row">
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+
+      <ul class="notes membershipNotes reveal" data-delay="3">
+        <li>
+          会員権に関する契約は、会員権契約・施設利用契約等を別途{COMPANY.name}と締結していただきます。
+        </li>
+        <li>宿泊施設の利用客室は特定されず、予約状況により利用可能客室をご利用いただけます。</li>
+        <li>同ランクの楽気ハウス施設間で、所有する会員権を移転することができます。</li>
+        <li>
+          記載の内容・金額は変更される場合があります。契約にあたっては、必ず会員権契約書・施設利用契約書等の契約書面、およびJWCCS利用規約の内容をご確認ください。
+        </li>
+      </ul>
+
+      <p class="btn-row membershipBtns reveal" data-delay="3">
+        <a class="btn btn--primary" href={pathFor('contact')}>会員権についてお問い合わせ</a>
+      </p>
+    </div>
+  </section>
+
+  {/* ============ 関連ページ ============ */}
+  <section class="section section--paper">
+    <div class="wrap">
+      <p class="eyebrow reveal">Links</p>
+      <h2 class="section-title reveal" data-delay="1">関連ページ</h2>
+      <hr class="rule reveal" data-delay="1" />
+
+      <ul class="linkCards reveal" data-delay="2">
+        <li>
+          <a class="linkCard ext" href={EXTERNAL.hotelSite} target="_blank" rel="noopener">
+            <span class="linkCard__label">外部サイト</span>
+            <span class="linkCard__title">楽気ハウス那須 ホテル公式サイト</span>
+            <span class="linkCard__text">
+              施設の詳しいご紹介、季節の特集、宿泊のご予約はこちらから。
+            </span>
+          </a>
+        </li>
+        <li>
+          <a class="linkCard" href={pathFor('wellness')}>
+            <span class="linkCard__label">館内のサロン</span>
+            <span class="linkCard__title">細胞浴SALON 太古の甕</span>
+            <span class="linkCard__text">天然鉱石「樹紋石」を用いた温浴サロンです。</span>
+          </a>
+        </li>
+        <li>
+          <a class="linkCard" href={pathFor('beauty')}>
+            <span class="linkCard__label">館内のサロン</span>
+            <span class="linkCard__title">Esthetic Salon RICHIA</span>
+            <span class="linkCard__text">フェイシャルとボディのエステティック。</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <CtaBand
+    heading="宴会場のご利用・会員権のご相談"
+    body="宴会場やコンベンションホールのご利用、会員権のお申し込みについては、本社までお問い合わせください。ご宿泊のご予約はホテルへ直接お願いいたします。"
+  />
+</Base>
+
+<style>
+  .overviewBtns {
+    margin-top: 1.75rem;
+  }
+
+  .factsDl {
+    margin-top: clamp(1.75rem, 4vw, 2.25rem);
+  }
+
+  .factsBtns {
+    margin-top: 1.75rem;
+  }
+
+  /* ---------------- 館内のご案内 ---------------- */
+  .facilitiesLede {
+    margin-top: 1.5rem;
+  }
+
+  .facilities {
+    list-style: none;
+    padding: 0;
+    margin: clamp(2rem, 5vw, 3rem) 0 0;
+    display: grid;
+    gap: clamp(1.25rem, 3vw, 2rem);
+  }
+
+  @media (min-width: 640px) {
+    .facilities {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1000px) {
+    .facilities {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  .facilities .card {
+    height: 100%;
+  }
+
+  .facilitiesNote {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  /* ---------------- 予約導線 ---------------- */
+  .routes {
+    list-style: none;
+    padding: 0;
+    margin: clamp(2rem, 5vw, 3rem) 0 0;
+    display: grid;
+    gap: clamp(1.25rem, 3vw, 2rem);
+  }
+
+  @media (min-width: 800px) {
+    .routes {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .route {
+    background: var(--white);
+    border: 1px solid var(--line-soft);
+    border-top: 2px solid var(--ai-700);
+    padding: clamp(1.5rem, 3.5vw, 2.25rem);
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .route:nth-child(2) {
+    border-top-color: var(--gold);
+  }
+
+  .route__label {
+    font-size: 0.6875rem;
+    letter-spacing: 0.18em;
+    color: var(--ai-600);
+    font-weight: 600;
+  }
+
+  .route__title {
+    font-size: var(--step-2);
+  }
+
+  .route__body {
+    font-size: var(--step--1);
+    line-height: 2;
+    color: var(--ink-70);
+    flex: 1;
+  }
+
+  .route__tel {
+    font-size: var(--step--1);
+    color: var(--ink-70);
+  }
+
+  /* ---------------- 会員権 ---------------- */
+  .membershipLede {
+    margin-top: 1.5rem;
+  }
+
+  .membershipDl {
+    margin-top: 1.75rem;
+  }
+
+  .membershipNotes {
+    margin-top: 1.5rem;
+  }
+
+  .membershipBtns {
+    margin-top: 2rem;
+  }
+
+  /* ---------------- 関連ページ ---------------- */
+  .linkCards {
+    list-style: none;
+    padding: 0;
+    margin: clamp(1.75rem, 4vw, 2.5rem) 0 0;
+    display: grid;
+    gap: clamp(1rem, 2.5vw, 1.5rem);
+  }
+
+  @media (min-width: 760px) {
+    .linkCards {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .linkCard {
+    display: grid;
+    gap: 0.5rem;
+    height: 100%;
+    background: var(--white);
+    border: 1px solid var(--line-soft);
+    padding: clamp(1.25rem, 2.5vw, 1.75rem);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .linkCard:hover {
+    border-color: var(--ai-100);
+    box-shadow: var(--shadow);
+    color: inherit;
+  }
+
+  .linkCard__label {
+    font-size: 0.6875rem;
+    letter-spacing: 0.18em;
+    color: var(--ai-600);
+    font-weight: 600;
+  }
+
+  .linkCard__title {
+    font-family: var(--serif);
+    font-size: var(--step-1);
+    font-weight: 600;
+    color: var(--ai-900);
+    line-height: 1.5;
+  }
+
+  .linkCard__text {
+    font-size: var(--step--1);
+    color: var(--ink-70);
+    line-height: 1.9;
+  }
+</style>

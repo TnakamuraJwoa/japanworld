@@ -1,0 +1,261 @@
+---
+/**
+ * 事業紹介のハブ。
+ *
+ * ⚠ 主役は Japan World株式会社自身の事業（Resort Hotel 楽気ハウス那須）。
+ *   細胞浴SALON「太古の甕」と Esthetic Salon RICHIA は JWORLD CO.,LTD の事業なので、
+ *   当社の事業として並べず、「楽気ハウス那須の館内施設」として別枠で紹介する。
+ */
+import Base from '../../layouts/Base.astro';
+import Picture from '../../components/Picture.astro';
+import PageHero from '../../components/PageHero.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import { COMPANY, OPERATORS, pathFor } from '../../data/site';
+import { OWN_BUSINESSES, INHOUSE_SALONS } from '../../data/business';
+import { organization, webSite, breadcrumbs } from '../../data/jsonld';
+---
+
+<Base
+  title="事業紹介"
+  description="Japan World株式会社の事業紹介。栃木県・那須高原のリゾートホテル「楽気ハウス那須」を運営しています。全26室、温泉大浴場と露天風呂、200人規模のコンベンションホールを備えています。"
+  path={pathFor('business')}
+  ogImage="rooms/window-view"
+  jsonLd={[webSite(), organization(), breadcrumbs([{ key: 'business', name: '事業紹介' }])]}
+>
+  <PageHero
+    eyebrow="Business"
+    title="事業紹介"
+    lead="Japan World株式会社は、栃木県・那須高原でリゾートホテル「楽気ハウス那須」を運営しています。"
+  />
+  <Breadcrumbs trail={['business']} />
+
+  {/* ============ 当社の事業 ============ */}
+  <section class="section">
+    <div class="wrap">
+      {
+        OWN_BUSINESSES.map((b, i) => (
+          <article class="bizRow reveal">
+            <div class="bizRow__media zoomable">
+              <a href={pathFor(b.key)} tabindex="-1" aria-hidden="true">
+                <Picture
+                  name={b.image}
+                  sizes="(min-width: 860px) 46vw, 92vw"
+                  ratio="4/3"
+                  priority={i === 0}
+                />
+              </a>
+            </div>
+            <div class="bizRow__text">
+              <p class="bizRow__eyebrow">{b.eyebrow}</p>
+              <h2 class="bizRow__title">
+                <a href={pathFor(b.key)}>{b.title}</a>
+              </h2>
+              <p class="bizRow__lead">{b.lead}</p>
+              <hr class="rule" />
+              <p class="bizRow__summary">{b.summary}</p>
+              <ul class="ticks bizRow__points">
+                {b.points.map((pt) => (
+                  <li>{pt}</li>
+                ))}
+              </ul>
+              <p class="btn-row bizRow__btn">
+                <a class="btn btn--primary" href={pathFor(b.key)}>
+                  {b.title}について
+                </a>
+              </p>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  {/* ============ 館内施設（当社の事業ではない） ============ */}
+  <section class="section section--paper">
+    <div class="wrap">
+      <p class="eyebrow reveal">In-house Salons</p>
+      <h2 class="section-title reveal" data-delay="1">楽気ハウス那須の館内施設</h2>
+      <hr class="rule reveal" data-delay="1" />
+      <p class="lede salonsLede reveal" data-delay="2">
+        館内には、ご宿泊とあわせてご利用いただけるサロンがあります。いずれも{COMPANY.name}の事業ではなく、<strong
+          >{OPERATORS.jworld.name}</strong
+        >が運営しています。
+      </p>
+
+      <ul class="salons">
+        {
+          INHOUSE_SALONS.map((b, i) => (
+            <li class="reveal" data-delay={String(Math.min(i + 1, 3))}>
+              <a class="salon" href={pathFor(b.key)}>
+                <span class="salon__media zoomable">
+                  <Picture name={b.image} sizes="(min-width: 760px) 46vw, 92vw" ratio="16/9" />
+                </span>
+                <span class="salon__body">
+                  <span class="salon__name">{b.title}</span>
+                  <span class="salon__lead">{b.lead}</span>
+                  <span class="salon__operator">運営：{OPERATORS.jworld.name}</span>
+                  <span class="link-arrow">詳しく見る</span>
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <CtaBand />
+</Base>
+
+<style>
+  /* ---------------- 当社の事業 ---------------- */
+  .bizRow {
+    display: grid;
+    gap: clamp(1.5rem, 4vw, 3.5rem);
+    align-items: center;
+  }
+
+  @media (min-width: 860px) {
+    .bizRow {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .bizRow__media :global(img) {
+    border-radius: var(--radius);
+  }
+
+  .bizRow__media a {
+    display: block;
+  }
+
+  .bizRow__eyebrow {
+    font-size: var(--step--1);
+    letter-spacing: 0.24em;
+    color: var(--ai-600);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .bizRow__title {
+    font-size: var(--step-3);
+    line-height: 1.45;
+  }
+
+  .bizRow__title a {
+    text-decoration: none;
+    color: var(--ai-900);
+  }
+
+  .bizRow__title a:hover {
+    text-decoration: underline;
+  }
+
+  .bizRow__lead {
+    margin-top: 0.6rem;
+    color: var(--gold);
+    font-weight: 600;
+    font-size: var(--step--1);
+  }
+
+  .bizRow__summary {
+    margin-top: 1.5rem;
+    line-height: 2.05;
+  }
+
+  .bizRow__points {
+    margin-top: 1.5rem;
+    font-size: var(--step--1);
+    color: var(--ink-70);
+  }
+
+  .bizRow__btn {
+    margin-top: 2rem;
+  }
+
+  /* ---------------- 館内施設 ---------------- */
+  .salonsLede {
+    margin-top: 1.5rem;
+  }
+
+  .salonsLede strong {
+    font-weight: 600;
+    color: var(--ai-800);
+  }
+
+  .salons {
+    list-style: none;
+    padding: 0;
+    margin: clamp(2rem, 5vw, 3rem) 0 0;
+    display: grid;
+    gap: clamp(1.25rem, 3vw, 2rem);
+  }
+
+  @media (min-width: 760px) {
+    .salons {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .salon {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    height: 100%;
+    background: var(--white);
+    border: 1px solid var(--line-soft);
+    text-decoration: none;
+    color: inherit;
+    overflow: hidden;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .salon:hover {
+    border-color: var(--ai-100);
+    box-shadow: var(--shadow);
+    color: inherit;
+  }
+
+  .salon:hover .salon__name {
+    text-decoration: underline;
+  }
+
+  .salon__media {
+    display: block;
+  }
+
+  .salon__body {
+    display: grid;
+    align-content: start;
+    gap: 0.5rem;
+    padding: clamp(1.25rem, 2.5vw, 1.75rem);
+  }
+
+  .salon__name {
+    font-family: var(--serif);
+    font-size: var(--step-1);
+    font-weight: 600;
+    color: var(--ai-900);
+    line-height: 1.5;
+  }
+
+  .salon__lead {
+    font-size: var(--step--1);
+    color: var(--ink-70);
+    line-height: 1.9;
+  }
+
+  .salon__operator {
+    font-size: 0.75rem;
+    color: var(--ink-50);
+    letter-spacing: 0.02em;
+    line-height: 1.7;
+    margin-top: 0.3rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .salon .link-arrow {
+    margin-top: 0.4rem;
+  }
+</style>

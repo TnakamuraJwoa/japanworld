@@ -87,6 +87,7 @@ const pages = htmlFiles.map((file) => {
     imgs: all(/<img\b[^>]*>/gi).map((m) => m[0]),
     links: all(/<a\b[^>]*href="([^"]+)"[^>]*>/gi).map((m) => ({ tag: m[0], href: decode(m[1]) })),
     hreflangs: all(/<link rel="alternate" hreflang="([^"]+)" href="([^"]+)"/gi).map((m) => [m[1], m[2]]),
+    htmlLang: (html.match(/<html[^>]*\slang="([^"]+)"/i) ?? [])[1] ?? null,
     jsonLd: all(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi).map((m) => m[1]),
     bytes: Buffer.byteLength(html),
   };
@@ -137,7 +138,7 @@ let dupT = 0;
 for (const [t, urls] of titleMap) if (urls.length > 1) { fail(`title 重複 (${urls.length}件): "${t.slice(0, 40)}…" → ${urls.join(', ')}`); dupT++; }
 let dupD = 0;
 for (const [d, urls] of descMap) if (urls.length > 1) { fail(`description 重複 (${urls.length}件): ${urls.join(', ')}`); dupD++; }
-if (!dupT && !dupD) ok('title / description に重複なし（48ページすべて固有）');
+if (!dupT && !dupD) ok(`title / description に重複なし（${pages.length}ページすべて固有）`);
 
 // ---------------------------------------------------------------- 3. alt
 console.log('\n[3] 画像の alt / width / height');
@@ -247,30 +248,23 @@ for (const f of allFiles) {
 }
 if (!wixHits) ok('dist 内に wixstatic / parastorage / wixdns / sentry / wixapps への参照は 0 件');
 
-// ---------------------------------------------------------------- 6. hreflang
-console.log('\n[6] hreflang');
-const EXPECT = ['ja', 'en', 'zh-Hant', 'vi', 'x-default'];
-let hrefIssues = 0;
+// ------------------------------------------------------- 6. 日本語単独サイト
+// 多言語版は廃止した（worker が /en/ /zh/ /vi/ を日本語ページへ 301 する）。
+// hreflang が残っていると存在しない言語版を検索エンジンに知らせてしまうため、
+// 「無いこと」と「html lang="ja" であること」を検査する。
+console.log('\n[6] 日本語単独サイト');
+let langIssues = 0;
 for (const p of pages) {
-  if (p.url === '/404.html') continue;
-  const got = p.hreflangs.map(([l]) => l);
-  for (const e of EXPECT) {
-    if (!got.includes(e)) {
-      fail(`${p.url}: hreflang "${e}" がない`);
-      hrefIssues++;
-    }
+  if (p.hreflangs.length) {
+    fail(`${p.url}: 多言語版は廃止したのに hreflang が残っている（${p.hreflangs.length}件）`);
+    langIssues++;
   }
-  // 相互参照: hreflang 先のページが実在するか
-  for (const [, href] of p.hreflangs) {
-    const u = href.replace(ORIGIN, '');
-    const target = u.endsWith('/') ? u + 'index.html' : u;
-    if (!fileSet.has(target)) {
-      fail(`${p.url}: hreflang 先が存在しない ${href}`);
-      hrefIssues++;
-    }
+  if (p.htmlLang && p.htmlLang !== 'ja') {
+    fail(`${p.url}: html lang が "${p.htmlLang}"（"ja" であるべき）`);
+    langIssues++;
   }
 }
-if (!hrefIssues) ok(`全ページに ja / en / zh-Hant / vi / x-default の hreflang があり、相互に到達可能`);
+if (!langIssues) ok('全ページが html lang="ja" で、hreflang を出力していない');
 
 // ---------------------------------------------------------------- 7. sitemap
 console.log('\n[7] sitemap');

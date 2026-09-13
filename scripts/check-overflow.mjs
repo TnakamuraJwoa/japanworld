@@ -12,11 +12,15 @@ const preview = await servePreview('dist');
 const BASE = process.argv[2] ?? preview.base;
 const WIDTHS = [320, 360, 390, 414, 600, 768, 900, 1280];
 const PAGES = [
-  '/', '/raki-house/', '/raki-house/rooms/', '/raki-house/spa/', '/raki-house/dining/',
-  '/raki-house/banquet/', '/raki-house/salon/', '/raki-house/nasu/',
-  '/booking/', '/membership/', '/access/', '/company/',
-  '/en/', '/en/membership/', '/en/access/',
-  '/zh/', '/zh/membership/', '/vi/', '/vi/membership/',
+  '/',
+  '/business/',
+  '/business/wellness/',
+  '/business/beauty/',
+  '/business/hospitality/',
+  '/company/',
+  '/news/',
+  '/news/nasu-accommodation-tax-2026/',
+  '/contact/',
   '/nope/',
 ];
 

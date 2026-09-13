@@ -774,6 +774,17 @@ export const IMAGES = {
     "width": 2000,
     "height": 1042
   },
+  "hero/corporate-resort": {
+    "name": "hero/corporate-resort",
+    "alt": "夕暮れの那須連山を背に、客室のあかりが灯る山あいのリゾートホテル",
+    "widths": [
+      640,
+      1024,
+      1280
+    ],
+    "width": 1280,
+    "height": 720
+  },
   "rooms/window-view": {
     "name": "rooms/window-view",
     "alt": "大きな窓から那須高原の森を望む客室",

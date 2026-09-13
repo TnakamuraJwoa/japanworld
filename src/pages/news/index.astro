@@ -1,0 +1,38 @@
+---
+/**
+ * お知らせ一覧（1ページ目）。
+ * 2ページ目以降は src/pages/news/page/[page].astro が生成する。
+ */
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import NewsList from '../../components/NewsList.astro';
+import Pagination from '../../components/Pagination.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import { pathFor } from '../../data/site';
+import { getNews, getTotalPages, NEWS_PER_PAGE } from '../../data/news';
+import { organization, webSite, breadcrumbs } from '../../data/jsonld';
+
+const { contents, totalCount } = getNews({ limit: NEWS_PER_PAGE, offset: 0 });
+const totalPages = getTotalPages();
+---
+
+<Base
+  title="お知らせ"
+  description="Japan World株式会社からのお知らせ一覧。サロン・ホテルの営業に関するご案内、事業に関する最新情報を掲載しています。"
+  path={pathFor('news')}
+  ogImage="lobby/atrium"
+  jsonLd={[webSite(), organization(), breadcrumbs([{ key: 'news', name: 'お知らせ' }])]}
+>
+  <PageHero eyebrow="News" title="お知らせ" />
+  <Breadcrumbs trail={['news']} />
+
+  <section class="section">
+    <div class="wrap-narrow">
+      <NewsList items={contents} emptyText="現在お知らせはありません。" />
+      {totalCount > 0 && <Pagination current={1} total={totalPages} />}
+    </div>
+  </section>
+
+  <CtaBand />
+</Base>

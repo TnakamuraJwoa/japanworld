@@ -1,0 +1,184 @@
+---
+/**
+ * お知らせ詳細。
+ */
+import Base from '../../layouts/Base.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import { pathFor } from '../../data/site';
+import { getNews, getNewsItem, getAllNewsIds, formatDate, type NewsItem } from '../../data/news';
+import { organization, webSite, newsArticle, breadcrumbsRaw } from '../../data/jsonld';
+
+export function getStaticPaths() {
+  return getAllNewsIds().map((id) => ({ params: { id }, props: { id } }));
+}
+
+const { id } = Astro.props;
+const item = getNewsItem(id) as NewsItem;
+const path = `${pathFor('news')}${item.id}/`;
+
+/** 同じ一覧の中で、この記事の次に新しい／古い記事 */
+const all = getNews({ limit: 1000 }).contents;
+const index = all.findIndex((n) => n.id === item.id);
+const newer = index > 0 ? all[index - 1] : undefined;
+const older = index >= 0 && index < all.length - 1 ? all[index + 1] : undefined;
+---
+
+<Base
+  title={item.title}
+  description={item.summary}
+  path={path}
+  ogImage="lobby/atrium"
+  jsonLd={[
+    webSite(),
+    organization(),
+    newsArticle(item),
+    breadcrumbsRaw([
+      { name: 'お知らせ', path: pathFor('news') },
+      { name: item.title, path },
+    ]),
+  ]}
+>
+  <Breadcrumbs
+    trail={[{ name: 'お知らせ', href: pathFor('news') }, { name: item.title }]}
+  />
+
+  <article class="section">
+    <div class="wrap-narrow">
+      <header class="post__head">
+        <p class="post__meta">
+          <time class="news-item__date" datetime={item.publishedAt}>
+            {formatDate(item.publishedAt)}
+          </time>
+          <span class="tag">{item.category.name}</span>
+        </p>
+        <h1 class="post__title">{item.title}</h1>
+      </header>
+
+      <div class="post__body stack">
+        {item.body.map((para) => <p>{para}</p>)}
+      </div>
+
+      {
+        item.link && (
+          <p class="btn-row post__link">
+            <a
+              class={`btn btn--ghost${item.link.external ? ' ext' : ''}`}
+              href={item.link.href}
+              target={item.link.external ? '_blank' : undefined}
+              rel={item.link.external ? 'noopener' : undefined}
+            >
+              {item.link.label}
+            </a>
+          </p>
+        )
+      }
+
+      <nav class="post__nav" aria-label="お知らせの前後の記事">
+        <div class="post__navSide">
+          {
+            newer && (
+              <a class="post__navLink" href={`${pathFor('news')}${newer.id}/`} rel="prev">
+                <span class="post__navLabel">新しいお知らせ</span>
+                <span class="post__navTitle">{newer.title}</span>
+              </a>
+            )
+          }
+        </div>
+        <p class="post__navHome">
+          <a class="link-arrow" href={pathFor('news')}>お知らせ一覧へ</a>
+        </p>
+        <div class="post__navSide post__navSide--end">
+          {
+            older && (
+              <a class="post__navLink" href={`${pathFor('news')}${older.id}/`} rel="next">
+                <span class="post__navLabel">過去のお知らせ</span>
+                <span class="post__navTitle">{older.title}</span>
+              </a>
+            )
+          }
+        </div>
+      </nav>
+    </div>
+  </article>
+
+  <CtaBand />
+</Base>
+
+<style>
+  .post__head {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: clamp(1.5rem, 3.5vw, 2rem);
+    margin-bottom: clamp(1.75rem, 4vw, 2.5rem);
+  }
+
+  .post__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 1rem;
+  }
+
+  .post__title {
+    font-size: var(--step-3);
+    line-height: 1.5;
+  }
+
+  .post__body {
+    line-height: 2.15;
+  }
+
+  .post__link {
+    margin-top: 2.25rem;
+  }
+
+  .post__nav {
+    margin-top: clamp(3rem, 7vw, 4.5rem);
+    border-top: 1px solid var(--line);
+    padding-top: 1.75rem;
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  @media (min-width: 760px) {
+    .post__nav {
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 1.5rem;
+    }
+  }
+
+  .post__navSide--end {
+    text-align: right;
+  }
+
+  .post__navLink {
+    display: grid;
+    gap: 0.3rem;
+    text-decoration: none;
+    color: inherit;
+    min-height: 44px;
+    align-content: center;
+  }
+
+  .post__navLink:hover .post__navTitle {
+    text-decoration: underline;
+  }
+
+  .post__navLabel {
+    font-size: 0.6875rem;
+    letter-spacing: 0.16em;
+    color: var(--ink-50);
+    font-weight: 600;
+  }
+
+  .post__navTitle {
+    font-size: var(--step--1);
+    color: var(--ai-700);
+    line-height: 1.7;
+  }
+
+  .post__navHome {
+    text-align: center;
+  }
+</style>

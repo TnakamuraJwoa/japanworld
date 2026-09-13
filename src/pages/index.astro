@@ -1,0 +1,613 @@
+---
+/**
+ * トップページ。
+ *
+ * 構成:
+ *   ① ファーストビュー       会社の方向性を1行で
+ *   ② Japan Worldについて    何をしている会社かを3行で
+ *   ③ 事業紹介               このページの主役。カード3枚
+ *   ④ 私たちの姿勢           確認できた事実にだけ基づく3項目
+ *   ⑤ お知らせ               最新4件
+ *   ⑥ 会社情報への導線
+ */
+import Base from '../layouts/Base.astro';
+import Picture from '../components/Picture.astro';
+import { SITE, COMPANY, pathFor, ROUTE_LABEL } from '../data/site';
+import { OWN_BUSINESSES, INHOUSE_SALONS } from '../data/business';
+import { getNews, formatDate, NEWS_ON_HOME } from '../data/news';
+import { organization, webSite } from '../data/jsonld';
+
+const news = getNews({ limit: NEWS_ON_HOME }).contents;
+
+/**
+ * 私たちの姿勢。
+ *
+ * ⚠ すべて現行サイト・参考サイトで確認できた事実に基づく。
+ *    数値実績・受賞歴・導入事例などは一切作っていない。
+ * ⚠ ここは Japan World株式会社を主語にした節。細胞浴とエステは JWORLD CO.,LTD の事業なので、
+ *    当社が提供しているようには書かない（館内にサロンがある、という施設の事実として書く）。
+ *    運営会社の明記はフッター1箇所に集約している。
+ */
+const values = [
+  {
+    n: '01',
+    title: '静けさを、設計する',
+    body: '全26室の館内をゲストの占有空間として運営しています。混み合わないこと、急かされないこと自体を、提供する価値として考えています。',
+  },
+  {
+    n: '02',
+    title: 'ひとつの滞在で、続けて',
+    body: '温泉の大浴場と露天風呂に加え、館内には細胞浴とエステティックのサロンがあります。別の場所へ出向かずに続けてご利用いただけます。',
+  },
+  {
+    n: '03',
+    title: '目的に合わせて使える',
+    body: 'ご宿泊のほか、最大200人規模のコンベンションホールをご用意しています。会員制のホテルとして運営しながら、一般のお客様のご宿泊も承っています。',
+  },
+];
+---
+
+<Base
+  title={`${COMPANY.name} | ${SITE.tagline}`}
+  bareTitle
+  description="Japan World株式会社は、栃木県・那須高原のリゾートホテル「楽気ハウス那須」を運営しています。館内には、細胞浴SALON「太古の甕」と Esthetic Salon RICHIA を併設し、宿泊とあわせてご利用いただけます。"
+  path="/"
+  ogImage="hero/corporate-resort"
+  preloadImage={{ name: 'hero/corporate-resort', sizes: '100vw' }}
+  jsonLd={[webSite(), organization()]}
+>
+  {/* ============ ① ファーストビュー ============ */}
+  <section class="hero">
+    <div class="hero__media zoom-out">
+      <Picture name="hero/corporate-resort" alt="" sizes="100vw" priority class="hero__img" />
+    </div>
+
+    <div class="wrap hero__inner">
+      <p class="hero__eyebrow">JAPAN WORLD CO., LTD.</p>
+      <h1 class="hero__title">健康と、美しさと、<br />暮らしのそばに。</h1>
+      <p class="hero__sub">
+        那須高原のリゾートホテル「楽気ハウス那須」を運営しています。<br />
+        館内には、細胞浴とエステティックのサロンを併設しています。
+      </p>
+      <div class="btn-row hero__btns">
+        <a class="btn btn--onDark" href={pathFor('business')}>事業を見る</a>
+        <a class="btn btn--outlineDark" href={pathFor('company')}>会社情報</a>
+      </div>
+    </div>
+
+    <a class="hero__scroll" href="#about" aria-label="本文へ進む">
+      <span aria-hidden="true"></span>
+    </a>
+  </section>
+
+  {/* ============ ② Japan Worldについて ============ */}
+  <section class="section" id="about">
+    <div class="wrap-narrow about">
+      <p class="eyebrow reveal">About Japan World</p>
+      <h2 class="section-title reveal" data-delay="1">
+        心地よさを、事業にする会社です
+      </h2>
+      <hr class="rule reveal" data-delay="1" />
+      <div class="about__body stack reveal" data-delay="2">
+        <p>
+          Japan World株式会社は、東京・上野に本社を置き、栃木県・那須高原でリゾートホテル<strong
+            >「楽気ハウス那須」</strong
+          >を運営しています。
+        </p>
+        <p>
+          その館内には、天然鉱石を用いた温浴サロン「太古の甕」と、大人の女性のためのエステサロン「RICHIA」を併設しています。いずれも
+          <strong>からだを整え、気持ちをほどく時間をつくる</strong>という一点でつながっています。
+        </p>
+        <p>
+          サービスを数多くそろえることよりも、一組ずつに向き合える規模で続けることを大切にしています。
+        </p>
+      </div>
+      <p class="about__link reveal" data-delay="3">
+        <a class="link-arrow" href={pathFor('company')}>会社情報を見る</a>
+      </p>
+    </div>
+  </section>
+
+  {/* ============ ③ 事業紹介（このページの主役） ============ */}
+  <section class="section section--paper">
+    <div class="wrap">
+      <div class="secHead">
+        <p class="eyebrow reveal">Our Business</p>
+        <h2 class="section-title reveal" data-delay="1">事業紹介</h2>
+        <hr class="rule reveal" data-delay="1" />
+        <p class="lede secHead__lede reveal" data-delay="2">
+          当社は、栃木県・那須高原でリゾートホテル「楽気ハウス那須」を運営しています。
+        </p>
+      </div>
+
+      {/* 当社の事業。トップページの事業紹介はここが主役 */}
+      {
+        OWN_BUSINESSES.map((b) => (
+          <article class="feature reveal">
+            <div class="feature__media zoomable">
+              <Picture name={b.hero} sizes="(min-width: 900px) 52vw, 92vw" ratio="3/2" />
+            </div>
+            <div class="feature__text">
+              <p class="feature__eyebrow">{b.eyebrow}</p>
+              <h3 class="feature__title">
+                <a href={pathFor(b.key)}>{b.title}</a>
+              </h3>
+              <p class="feature__lead">{b.lead}</p>
+              <hr class="rule" />
+              <p class="feature__summary">{b.summary}</p>
+              <ul class="ticks feature__points">
+                {b.points.map((pt) => (
+                  <li>{pt}</li>
+                ))}
+              </ul>
+              <p class="btn-row feature__btn">
+                <a class="btn btn--primary" href={pathFor(b.key)}>
+                  {b.title}について
+                </a>
+              </p>
+            </div>
+          </article>
+        ))
+      }
+
+      {/* 館内施設。当社の事業ではないので、控えめな導線にとどめる */}
+      <div class="inhouse reveal">
+        <p class="inhouse__heading">楽気ハウス那須の館内施設</p>
+        <p class="inhouse__note">
+          館内には、ご宿泊とあわせてご利用いただけるサロンがあります。
+        </p>
+        <ul class="inhouse__list">
+          {
+            INHOUSE_SALONS.map((b) => (
+              <li>
+                <a class="inhouse__link" href={pathFor(b.key)}>
+                  <span class="inhouse__name">{b.title}</span>
+                  <span class="inhouse__lead">{b.lead}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  {/* ============ ④ 私たちの姿勢 ============ */}
+  <section class="section section--ai">
+    <div class="wrap">
+      <div class="secHead">
+        <p class="eyebrow reveal">Our Approach</p>
+        <h2 class="section-title reveal" data-delay="1">私たちの姿勢</h2>
+        <hr class="rule reveal" data-delay="1" />
+      </div>
+
+      <ul class="valueGrid">
+        {
+          values.map((v, i) => (
+            <li class="value reveal" data-delay={String(Math.min(i, 3))}>
+              <p class="value__n" aria-hidden="true">
+                {v.n}
+              </p>
+              <h3 class="value__title">{v.title}</h3>
+              <p class="value__body">{v.body}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  {/* ============ ⑤ お知らせ ============ */}
+  <section class="section">
+    <div class="wrap">
+      <div class="newsHead">
+        <div>
+          <p class="eyebrow reveal">News</p>
+          <h2 class="section-title reveal" data-delay="1">お知らせ</h2>
+        </div>
+        <p class="reveal" data-delay="1">
+          <a class="link-arrow" href={pathFor('news')}>{ROUTE_LABEL.news}をすべて見る</a>
+        </p>
+      </div>
+
+      {
+        news.length > 0 ? (
+          <ul class="news-list reveal" data-delay="2">
+            {news.map((item) => (
+              <li>
+                <a class="news-item" href={`${pathFor('news')}${item.id}/`}>
+                  <span class="news-item__meta">
+                    <time class="news-item__date" datetime={item.publishedAt}>
+                      {formatDate(item.publishedAt)}
+                    </time>
+                    <span class="tag">{item.category.name}</span>
+                  </span>
+                  <span class="news-item__title">{item.title}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="muted reveal" data-delay="2">
+            現在お知らせはありません。
+          </p>
+        )
+      }
+    </div>
+  </section>
+
+  {/* ============ ⑥ 会社情報への導線 ============ */}
+  <section class="section section--paper">
+    <div class="wrap companyTeaser">
+      <div class="companyTeaser__text reveal">
+        <p class="eyebrow">Company</p>
+        <h2 class="section-title">会社情報</h2>
+        <hr class="rule" />
+        <dl class="dl companyTeaser__dl">
+          <div class="dl__row">
+            <dt>商号</dt>
+            <dd>{COMPANY.name}</dd>
+          </div>
+          <div class="dl__row">
+            <dt>代表取締役</dt>
+            <dd>{COMPANY.ceo}</dd>
+          </div>
+          <div class="dl__row">
+            <dt>本社所在地</dt>
+            <dd>〒{COMPANY.postal}　{COMPANY.addressFull}</dd>
+          </div>
+          <div class="dl__row">
+            <dt>資本金</dt>
+            <dd>{COMPANY.capital}</dd>
+          </div>
+        </dl>
+        <div class="btn-row companyTeaser__btns">
+          <a class="btn btn--primary" href={pathFor('company')}>会社情報を詳しく見る</a>
+          <a class="btn btn--ghost" href={pathFor('contact')}>お問い合わせ</a>
+        </div>
+      </div>
+
+      <figure class="figure reveal" data-delay="2">
+        <div class="zoomable">
+          <Picture
+            name="lobby/atrium"
+            sizes="(min-width: 860px) 44vw, 92vw"
+            ratio="4/3"
+          />
+        </div>
+      </figure>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* ---------------- ① ファーストビュー ---------------- */
+  .hero {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: flex-end;
+    /* ヘッダー（64px / PC 76px）を差し引いた高さ。
+       100svh を使い、スマートフォンのアドレスバーで高さが跳ねないようにする。 */
+    min-height: min(calc(100svh - 64px), 46rem);
+    background: var(--ai-900);
+    overflow: hidden;
+  }
+
+  @media (min-width: 1000px) {
+    .hero {
+      min-height: min(calc(100svh - 76px), 48rem);
+    }
+  }
+
+  .hero__media {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+  }
+
+  .hero__media :global(.hero__img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* 文字のコントラストを確保する覆い。
+     下側を濃くして、文字が乗る領域だけしっかり暗くする。 */
+  .hero__media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to top, rgba(3, 22, 36, 0.92) 0%, rgba(3, 22, 36, 0.5) 42%, rgba(3, 22, 36, 0.26) 100%),
+      linear-gradient(to right, rgba(3, 22, 36, 0.5) 0%, rgba(3, 22, 36, 0) 70%);
+  }
+
+  .hero__inner {
+    padding-block: clamp(3rem, 9vw, 6rem) clamp(4.5rem, 11vw, 8rem);
+    color: #fff;
+  }
+
+  .hero__eyebrow {
+    font-size: var(--step--1);
+    letter-spacing: 0.3em;
+    color: var(--gold-soft);
+    font-weight: 600;
+    margin-bottom: clamp(1rem, 3vw, 1.75rem);
+  }
+
+  .hero__title {
+    font-size: clamp(2rem, 7.2vw, 4rem);
+    line-height: 1.45;
+    letter-spacing: 0.04em;
+    color: #fff;
+    text-shadow: 0 1px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  .hero__sub {
+    margin-top: clamp(1.25rem, 3.5vw, 2rem);
+    font-size: var(--step-0);
+    line-height: 2.1;
+    color: #e4ecf2;
+    max-width: 34em;
+  }
+
+  .hero__btns {
+    margin-top: clamp(1.75rem, 4.5vw, 2.75rem);
+  }
+
+  /* 下にコンテンツが続くことを示す小さな線 */
+  .hero__scroll {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    translate: -50% 0;
+    width: 48px;
+    height: 56px;
+    display: grid;
+    place-items: center;
+  }
+
+  .hero__scroll span {
+    display: block;
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.85) 100%);
+  }
+
+  @media (max-width: 640px) {
+    .hero__scroll {
+      display: none;
+    }
+  }
+
+  /* ---------------- ② Japan Worldについて ---------------- */
+  .about__body {
+    margin-top: clamp(1.75rem, 4vw, 2.5rem);
+    font-size: var(--step-0);
+    line-height: 2.15;
+  }
+
+  .about__body strong {
+    font-weight: 600;
+    color: var(--ai-800);
+  }
+
+  .about__link {
+    margin-top: 2rem;
+  }
+
+  /* ---------------- セクション見出し ---------------- */
+  .secHead {
+    margin-bottom: clamp(2.25rem, 5vw, 3.5rem);
+  }
+
+  .secHead__lede {
+    margin-top: 1.5rem;
+  }
+
+  /* ---------------- ③ 事業（当社の事業を大きく1件） ---------------- */
+  .feature {
+    display: grid;
+    gap: clamp(1.75rem, 4vw, 3.5rem);
+    align-items: center;
+  }
+
+  @media (min-width: 900px) {
+    .feature {
+      grid-template-columns: 1.05fr 1fr;
+    }
+  }
+
+  .feature__media :global(img) {
+    border-radius: var(--radius);
+  }
+
+  .feature__eyebrow {
+    font-size: var(--step--1);
+    letter-spacing: 0.24em;
+    color: var(--ai-600);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .feature__title {
+    font-size: var(--step-3);
+    line-height: 1.45;
+  }
+
+  .feature__title a {
+    text-decoration: none;
+    color: var(--ai-900);
+  }
+
+  .feature__title a:hover {
+    text-decoration: underline;
+  }
+
+  .feature__lead {
+    margin-top: 0.6rem;
+    color: var(--gold);
+    font-weight: 600;
+    font-size: var(--step--1);
+  }
+
+  .feature__summary {
+    margin-top: 1.5rem;
+    line-height: 2.05;
+  }
+
+  .feature__points {
+    margin-top: 1.5rem;
+    font-size: var(--step--1);
+    color: var(--ink-70);
+  }
+
+  .feature__btn {
+    margin-top: 2rem;
+  }
+
+  /* ---------------- ③-2 館内施設（控えめな導線） ---------------- */
+  .inhouse {
+    margin-top: clamp(3rem, 7vw, 5rem);
+    padding-top: clamp(2rem, 4vw, 2.75rem);
+    border-top: 1px solid var(--line);
+  }
+
+  .inhouse__heading {
+    font-size: var(--step--1);
+    font-weight: 600;
+    color: var(--ai-800);
+    letter-spacing: 0.08em;
+  }
+
+  .inhouse__note {
+    margin-top: 0.6rem;
+    font-size: var(--step--1);
+    color: var(--ink-70);
+    line-height: 1.9;
+  }
+
+  .inhouse__list {
+    list-style: none;
+    padding: 0;
+    margin: clamp(1.25rem, 3vw, 1.75rem) 0 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 700px) {
+    .inhouse__list {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .inhouse__link {
+    display: grid;
+    gap: 0.25rem;
+    background: var(--white);
+    border: 1px solid var(--line-soft);
+    padding: 1rem 1.25rem;
+    min-height: 48px;
+    align-content: center;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.18s ease;
+  }
+
+  .inhouse__link:hover {
+    border-color: var(--ai-100);
+    color: inherit;
+  }
+
+  .inhouse__link:hover .inhouse__name {
+    text-decoration: underline;
+  }
+
+  .inhouse__name {
+    font-size: var(--step-0);
+    font-weight: 600;
+    color: var(--ai-900);
+  }
+
+  .inhouse__lead {
+    font-size: 0.75rem;
+    color: var(--ink-50);
+    line-height: 1.7;
+  }
+
+  /* ---------------- ④ 私たちの姿勢 ---------------- */
+  .valueGrid {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: clamp(2rem, 4.5vw, 3rem);
+  }
+
+  @media (min-width: 800px) {
+    .valueGrid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .value {
+    border-top: 1px solid rgba(255, 255, 255, 0.22);
+    padding-top: 1.5rem;
+  }
+
+  .value__n {
+    font-family: var(--serif);
+    font-size: var(--step-2);
+    letter-spacing: 0.1em;
+    color: var(--gold-soft);
+    margin-bottom: 0.85rem;
+  }
+
+  .value__title {
+    font-size: var(--step-2);
+    color: #fff;
+  }
+
+  .value__body {
+    margin-top: 1rem;
+    font-size: var(--step--1);
+    line-height: 2.05;
+    color: #cfdde7;
+  }
+
+  /* ---------------- ⑤ お知らせ ---------------- */
+  .newsHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: clamp(1.5rem, 3.5vw, 2.25rem);
+  }
+
+  /* ---------------- ⑥ 会社情報 ---------------- */
+  .companyTeaser {
+    display: grid;
+    gap: clamp(2rem, 5vw, 3.5rem);
+    align-items: center;
+  }
+
+  @media (min-width: 860px) {
+    .companyTeaser {
+      grid-template-columns: 1fr 0.85fr;
+    }
+  }
+
+  .companyTeaser__dl {
+    margin-top: clamp(1.75rem, 4vw, 2.25rem);
+  }
+
+  .companyTeaser__btns {
+    margin-top: 2rem;
+  }
+
+  .companyTeaser figure :global(img) {
+    border-radius: var(--radius);
+  }
+</style>

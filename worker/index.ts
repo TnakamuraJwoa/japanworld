@@ -1,15 +1,20 @@
 /**
- * Japan World株式会社 / 楽気ハウス那須 — Cloudflare Worker
+ * Japan World株式会社 — Cloudflare Worker
  *
  * 役割:
  *   1. apex (japanworld.co.jp) → www へ 301（パス・クエリを保持）
- *   2. Wix 時代の旧URL → 新URL へ 301（日本語・英語・中国語・ベトナム語の全48URL）
+ *   2. 旧URL → 新URL へ 301
+ *      a. Wix 時代のページ（/rakihouse, /salon, /companyprofile …）
+ *      b. ホテル中心だった前構成（/raki-house/…, /booking/, /membership/, /access/）
+ *      c. 多言語（/en/… /zh/… /vi/…）→ 対応する日本語ページ
  *   3. Wix 固有パス → 410 Gone
  *   4. 末尾スラッシュの正規化
  *   5. 静的アセットの配信とセキュリティヘッダー付与
  *   6. 404 は /404.html を 404 ステータスで返す
  *
- * 対応表の全量は docs/03-url-migration.md を参照。
+ * ⚠ 2026-09-13 コーポレートサイト化に伴い、対応表を全面的に差し替えた。
+ *   多言語ページ（36URL）は廃止し、すべて日本語版へ 301 している。
+ *   旧対応表は docs/03-url-migration.md を参照。
  */
 
 export interface Env {
@@ -18,30 +23,52 @@ export interface Env {
 
 const CANONICAL_HOST = 'www.japanworld.co.jp';
 
-/** 言語プレフィックス（日本語はプレフィックスなし） */
-const LANG_PREFIXES = ['', '/en', '/zh', '/vi'] as const;
+/** かつて存在した言語プレフィックス。現在はすべて日本語ページへ送る */
+const LANG_PREFIXES = ['/en', '/zh', '/vi'] as const;
+
+/** 新サイトのパス（変更しない） */
+const P = {
+  home: '/',
+  business: '/business/',
+  wellness: '/business/wellness/',
+  beauty: '/business/beauty/',
+  hospitality: '/business/hospitality/',
+  company: '/company/',
+  news: '/news/',
+  contact: '/contact/',
+} as const;
 
 /**
- * Wix 時代のページスラッグ → 新サイトのパス断片。
- * 各言語プレフィックスに対して同じ対応が成り立つ。
+ * 旧スラッグ → 新パス。
+ * 日本語のパスをそのまま書き、言語プレフィックス版は下で自動展開する。
  */
 const SLUG_MAP: Record<string, string> = {
-  // 施設トップ。/楽気ハウス-那須 は施設インデックスページだった
-  '/rakihouse': '/raki-house/',
-  '/楽気ハウス-那須': '/raki-house/',
-  // ロビーは施設トップの一節に統合した
-  '/lobby': '/raki-house/',
-  // 「楽気ハウスの取り組み」も施設トップの一節に統合した
-  '/about': '/raki-house/',
+  /* ---- a. Wix 時代のページ ---- */
+  '/rakihouse': P.hospitality,
+  '/楽気ハウス-那須': P.hospitality,
+  '/lobby': P.hospitality,
+  '/about': P.hospitality,
+  '/room': P.hospitality,
+  '/spa': P.hospitality,
+  '/restaurant-and-bar': P.hospitality,
+  '/banquethall': P.hospitality,
+  // 細胞浴SALON 太古の甕 はウェルネス事業ページへ
+  '/salon': P.wellness,
+  '/about-5': P.hospitality,
+  '/companyprofile': P.company,
 
-  '/room': '/raki-house/rooms/',
-  '/spa': '/raki-house/spa/',
-  '/restaurant-and-bar': '/raki-house/dining/',
-  '/banquethall': '/raki-house/banquet/',
-  '/salon': '/raki-house/salon/',
-
-  '/about-5': '/membership/',
-  '/companyprofile': '/company/',
+  /* ---- b. ホテル中心だった前構成 ---- */
+  '/raki-house': P.hospitality,
+  '/raki-house/rooms': P.hospitality,
+  '/raki-house/spa': P.hospitality,
+  '/raki-house/dining': P.hospitality,
+  '/raki-house/banquet': P.hospitality,
+  '/raki-house/nasu': P.hospitality,
+  // スパ&サロンページは細胞浴とエステに分割した。主題である細胞浴側へ送る
+  '/raki-house/salon': P.wellness,
+  '/booking': P.hospitality,
+  '/membership': P.hospitality,
+  '/access': P.hospitality,
 };
 
 /** 言語に依存しない完全一致の旧URL */
@@ -64,13 +91,26 @@ const EXACT_REDIRECTS: Record<string, string> = {
 const REDIRECTS: Record<string, string> = (() => {
   const table: Record<string, string> = { ...EXACT_REDIRECTS };
 
+  // 日本語（プレフィックスなし）
+  for (const [oldSlug, newPath] of Object.entries(SLUG_MAP)) {
+    table[oldSlug] = newPath;
+  }
+
   for (const prefix of LANG_PREFIXES) {
-    for (const [oldSlug, newTail] of Object.entries(SLUG_MAP)) {
-      table[`${prefix}${oldSlug}`] = `${prefix}${newTail}`;
+    // /en → /、/en/ → /
+    table[prefix] = P.home;
+
+    // /en/room → /business/hospitality/ のように、日本語の新パスへ送る
+    for (const [oldSlug, newPath] of Object.entries(SLUG_MAP)) {
+      table[`${prefix}${oldSlug}`] = newPath;
     }
+
+    // 多言語版にも存在した現行ページ
+    table[`${prefix}/company`] = P.company;
+
     // 言語ごとの PDF リンク（/en/_files/ugd/... 等）
     for (const [oldPath, newPath] of Object.entries(EXACT_REDIRECTS)) {
-      if (prefix && oldPath.startsWith('/_files/')) {
+      if (oldPath.startsWith('/_files/')) {
         table[`${prefix}${oldPath}`] = newPath;
       }
     }
@@ -78,6 +118,17 @@ const REDIRECTS: Record<string, string> = (() => {
 
   return table;
 })();
+
+/**
+ * 対応表に無い多言語URLの受け皿。
+ * /en/ 配下のどのパスであっても、最低限トップページへは着地させる。
+ */
+function languageFallback(pathname: string): string | undefined {
+  for (const prefix of LANG_PREFIXES) {
+    if (pathname === prefix || pathname.startsWith(`${prefix}/`)) return P.home;
+  }
+  return undefined;
+}
 
 /** 移行後は存在しない Wix 固有パス（410 Gone を返してクロールを止める） */
 const GONE_PREFIXES = [
@@ -191,12 +242,18 @@ export default {
     const lower = pathname.toLowerCase();
     const stripped = lower.length > 1 && lower.endsWith('/') ? lower.slice(0, -1) : lower;
 
-    // ---- 5. Wix 固有パス → 410 Gone（ただしリダイレクト対象の _files は除く） ----
     const mapped = REDIRECTS[lower] ?? REDIRECTS[stripped];
     if (mapped) {
       return redirect(url, mapped);
     }
 
+    // 対応表に無い旧多言語URLも、トップへ着地させる（404 にしない）
+    const langFallback = languageFallback(stripped);
+    if (langFallback) {
+      return redirect(url, langFallback);
+    }
+
+    // ---- 5. Wix 固有パス → 410 Gone（ただしリダイレクト対象の _files は除く） ----
     if (GONE_PREFIXES.some((p) => lower.startsWith(p))) {
       return new Response('Gone', {
         status: 410,

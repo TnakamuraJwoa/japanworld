@@ -1,8 +1,11 @@
 /**
  * JSON-LD。実在が確認できた情報だけを使う。
  * 緯度経度・星評価・価格帯・チェックイン時刻などは現行サイトに記載がないため出力しない。
+ *
+ * コーポレートサイト化に伴い、Organization を全ページ共通の中心に据え、
+ * LodgingBusiness はホスピタリティ事業ページでのみ出力する。
  */
-import { SITE, COMPANY, HOTEL, EXTERNAL, pathFor, type Lang, type RouteKey } from './site';
+import { SITE, COMPANY, HOTEL, EXTERNAL, pathFor, type RouteKey } from './site';
 
 const abs = (p: string) => new URL(p, SITE.origin).href;
 
@@ -39,11 +42,11 @@ export function lodgingBusiness() {
     '@id': HOTEL_ID,
     name: HOTEL.name,
     alternateName: HOTEL.nameEn,
-    url: abs('/raki-house/'),
+    url: abs(pathFor('hospitality')),
     telephone: HOTEL.tel,
     faxNumber: HOTEL.fax,
     image: [
-      abs('/images/hotel/exterior-night-1600.webp'),
+      abs('/images/hotel/exterior-1600.webp'),
       abs('/images/spa/daiyokujo-wide-1600.webp'),
       abs('/images/rooms/window-view-1600.webp'),
     ],
@@ -67,19 +70,38 @@ export function lodgingBusiness() {
   };
 }
 
-export function webSite(lang: Lang) {
+export function webSite() {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     '@id': abs('/#website'),
     url: SITE.origin,
     name: SITE.name,
-    inLanguage: lang,
+    inLanguage: 'ja',
     publisher: { '@id': ORGANIZATION_ID },
   };
 }
 
-export function breadcrumbs(lang: Lang, trail: { key: RouteKey; name: string }[]) {
+/** お知らせ詳細ページ用 */
+export function newsArticle(item: {
+  id: string;
+  title: string;
+  summary: string;
+  publishedAt: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: item.title,
+    description: item.summary,
+    datePublished: item.publishedAt,
+    mainEntityOfPage: abs(`${pathFor('news')}${item.id}/`),
+    publisher: { '@id': ORGANIZATION_ID },
+    author: { '@id': ORGANIZATION_ID },
+  };
+}
+
+export function breadcrumbs(trail: { key: RouteKey; name: string }[]) {
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -87,7 +109,21 @@ export function breadcrumbs(lang: Lang, trail: { key: RouteKey; name: string }[]
       '@type': 'ListItem',
       position: i + 1,
       name: item.name,
-      item: abs(pathFor(lang, item.key)),
+      item: abs(pathFor(item.key)),
+    })),
+  };
+}
+
+/** パンくずの一部が固定ページでない場合（お知らせ詳細など）に使う汎用版 */
+export function breadcrumbsRaw(trail: { name: string; path: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: trail.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: item.name,
+      item: abs(item.path),
     })),
   };
 }

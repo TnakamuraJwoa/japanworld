@@ -1,11 +1,14 @@
 /* ============================================================
-   Japan World / 楽気ハウス那須
+   Japan World株式会社 コーポレートサイト
    デザイントークンと共通スタイル
 
-   配色は施設の実物に由来する:
-   - 藍（#0a4f79 系）… 楽気ハウスのロゴ、大浴場の藍染の壁、大浴場の暖簾
-   - 生成りの紙色 …… 和の設えに合わせた背景
-   - 金（#a8842c）… JWロゴのアクセント（黄）を印刷物向けに落ち着かせた色
+   配色の由来:
+   - 藍（#0a4f79 系）… JWロゴと楽気ハウスのロゴ、大浴場の藍染の壁に由来。
+                        信頼感の軸として全ページの基調に置く。
+   - オフホワイト …… 清潔感を優先し、和紙のような生成りから
+                        わずかに明度を上げた白へ寄せている。
+   - 金（#a08030）… JWロゴのアクセント（黄）を印刷物向けに落ち着かせた色。
+                        罫と見出しの装飾にだけ、ごく少量使う。
 
    Webフォントは読み込まない（外部通信ゼロ・LCP優先）。
    ============================================================ */
@@ -18,29 +21,29 @@
   --ai-600: #10628f;
   --ai-500: #2f7aa6;
   --ai-100: #dbe7ef;
-  --ai-50: #eef4f8;
+  --ai-50: #f0f5f9;
 
-  --gold: #a8842c;
+  --gold: #a08030;
   --gold-soft: #c9a94f;
 
   --ink: #1b2229;
   --ink-70: #4a545f;
   --ink-50: #6c7681;
 
-  --paper: #fbf9f5;
-  --paper-2: #f3efe8;
-  --paper-3: #e8e2d8;
+  --paper: #fcfbf9;
+  --paper-2: #f4f2ed;
+  --paper-3: #e9e5dd;
   --white: #ffffff;
 
-  --line: #ddd6c9;
-  --line-soft: #ece6da;
+  --line: #e0dcd3;
+  --line-soft: #eeebe4;
 
   --focus: #10628f;
 
   /* ---- 版面 ---- */
   --max: 1160px;
   --max-narrow: 760px;
-  --gutter: clamp(1rem, 4vw, 2.5rem);
+  --gutter: clamp(1.125rem, 4vw, 2.5rem);
 
   /* ---- 文字 ---- */
   --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans',
@@ -59,15 +62,6 @@
 
   --radius: 2px;
   --shadow: 0 1px 2px rgba(6, 47, 74, 0.06), 0 8px 24px rgba(6, 47, 74, 0.07);
-}
-
-/* ベトナム語だけ、見出し用のセリフ体をラテン系に差し替える。
-   和文の明朝体には ề(U+1EC1) ỗ(U+1ED7) ướ などベトナム語の合成済み文字が無く、
-   1文字ずつ別フォントへフォールバックした結果、
-   「về」が「vê`」、「chỗ」が「chô˜」のように発音区別符号が分離してしまうため。
-   --sans（本文）と、日本語・英語・中国語の見出しは変更しない。 */
-html[lang='vi'] {
-  --serif: 'Times New Roman', Times, Georgia, serif;
 }
 
 /* ---------------- reset ---------------- */
@@ -115,6 +109,9 @@ h4 {
   letter-spacing: 0.02em;
   margin: 0;
   text-wrap: balance;
+  /* 和文の見出しを文節単位で折り返す。
+     未対応のブラウザでは既定の折り返しに戻るだけで、崩れない。 */
+  word-break: auto-phrase;
 }
 
 p {
@@ -159,19 +156,29 @@ ol {
   padding-inline: var(--gutter);
 }
 
+/* 読みやすい行長に抑えた版面。
+   .wrap と同じ左端にそろえたうえで、中身の幅だけを狭める。
+   （中央寄せの狭いカラムにすると、広い節と狭い節で左端がずれて
+     ページ全体の見出しの位置がそろわなくなるため） */
 .wrap-narrow {
   width: 100%;
-  max-width: var(--max-narrow);
+  max-width: var(--max);
   margin-inline: auto;
   padding-inline: var(--gutter);
 }
 
+.wrap-narrow > * {
+  max-width: var(--max-narrow);
+}
+
+/* コーポレートサイト化にあたり、セクション間の余白を広げている。
+   上下に十分な間をとることが、上品さと読みやすさに直結するため。 */
 .section {
-  padding-block: clamp(3rem, 7vw, 6rem);
+  padding-block: clamp(4rem, 9vw, 8rem);
 }
 
 .section--tight {
-  padding-block: clamp(2.25rem, 5vw, 4rem);
+  padding-block: clamp(2.5rem, 5.5vw, 4.5rem);
 }
 
 .section--paper {
@@ -196,10 +203,14 @@ ol {
   margin-block-start: var(--stack-gap, 1.1em);
 }
 
+/* スキップリンク。
+   画面外へ出すのに left: -9999px を使うと、計測ツールから見て
+   版面が横に広がっているように見えるため、上方向へ逃がしている。 */
 .skip {
   position: absolute;
-  left: -9999px;
   top: 0;
+  left: 0;
+  transform: translateY(-200%);
   background: var(--ai-900);
   color: #fff;
   padding: 0.75rem 1.25rem;
@@ -207,7 +218,13 @@ ol {
 }
 
 .skip:focus {
-  left: 0;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skip {
+    transition: transform 0.15s ease;
+  }
 }
 
 /* ---------------- 見出し ---------------- */
@@ -329,6 +346,20 @@ ol {
   font-size: 0.85em;
   line-height: 1;
   margin-inline-start: 0.1em;
+}
+
+/* カード全体がリンクの場合、::after は grid の独立した行になってしまい、
+   矢印だけが本文から離れて置かれる。見出しの末尾に付け直す。 */
+.linkCard.ext::after {
+  content: none;
+}
+
+.linkCard.ext .linkCard__title::after {
+  content: '↗';
+  font-size: 0.8em;
+  line-height: 1;
+  margin-inline-start: 0.3em;
+  vertical-align: 0.08em;
 }
 
 /* ---------------- グリッド ---------------- */
@@ -579,6 +610,240 @@ figure {
 
 .crumbs a {
   color: var(--ink-50);
+}
+
+/* ---------------- お知らせ ---------------- */
+.news-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-top: 1px solid var(--line);
+}
+
+.news-list > li {
+  border-bottom: 1px solid var(--line);
+}
+
+.news-item {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.35rem 1.25rem;
+  align-items: baseline;
+  padding-block: 1.35rem;
+  text-decoration: none;
+  color: inherit;
+  transition: background-color 0.18s ease;
+}
+
+.news-item:hover {
+  background: var(--ai-50);
+  color: inherit;
+}
+
+.news-item:hover .news-item__title {
+  text-decoration: underline;
+}
+
+@media (min-width: 720px) {
+  .news-item {
+    grid-template-columns: 7.5rem 7.5rem 1fr;
+    padding-inline: 0.75rem;
+  }
+}
+
+.news-item__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: var(--step--1);
+}
+
+@media (min-width: 720px) {
+  .news-item__meta {
+    display: contents;
+  }
+}
+
+.news-item__date {
+  font-size: var(--step--1);
+  color: var(--ink-50);
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  padding: 0.4em 0.9em;
+  border: 1px solid var(--ai-100);
+  background: var(--ai-50);
+  color: var(--ai-800);
+  border-radius: 999px;
+  white-space: nowrap;
+  justify-self: start;
+}
+
+.news-item__title {
+  font-size: var(--step-0);
+  line-height: 1.75;
+  font-weight: 600;
+}
+
+/* ---------------- ページネーション ---------------- */
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  list-style: none;
+  padding: 0;
+  margin-block-start: clamp(2rem, 5vw, 3rem);
+}
+
+.pagination a,
+.pagination span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  padding-inline: 0.75rem;
+  border: 1px solid var(--line);
+  background: var(--white);
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-size: var(--step--1);
+  font-variant-numeric: tabular-nums;
+}
+
+.pagination a:hover {
+  border-color: var(--ai-500);
+  background: var(--ai-50);
+}
+
+.pagination [aria-current='page'] {
+  background: var(--ai-700);
+  border-color: var(--ai-700);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ---------------- 矢印つきテキストリンク ---------------- */
+.link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-weight: 600;
+  font-size: var(--step--1);
+  text-decoration: none;
+  color: var(--ai-700);
+}
+
+.link-arrow::after {
+  content: '→';
+  transition: transform 0.18s ease;
+}
+
+.link-arrow:hover::after {
+  transform: translateX(0.25em);
+}
+
+.link-arrow:hover {
+  text-decoration: underline;
+}
+
+/* ---------------- リード文 ---------------- */
+.lede {
+  font-size: var(--step-1);
+  line-height: 1.95;
+  color: var(--ink-70);
+  max-width: 46em;
+}
+
+/* ============================================================
+   アニメーション
+
+   方針:
+   - 外部ライブラリは使わない。CSS と、IntersectionObserver 約20行のみ。
+   - prefers-reduced-motion: reduce のときは、初期状態の隠しごと無効化する
+     （上部の全体ルールで duration を潰すだけでは、opacity:0 のまま
+       残ってしまう可能性があるため、隠す指定そのものを出さない）。
+   - JavaScript が動かない環境では html[data-reveal] が付かないので、
+     .reveal は最初から表示されたままになる。
+   ============================================================ */
+
+/* ファーストビュー画像を 1.08 倍からゆっくり等倍へ戻す */
+@keyframes heroZoom {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.zoom-out img {
+  animation: heroZoom 9s cubic-bezier(0.22, 0.61, 0.24, 1) both;
+  will-change: transform;
+}
+
+/* スクロールで下から浮かび上がる */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-reveal] .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.75s ease, transform 0.75s cubic-bezier(0.22, 0.61, 0.24, 1);
+  }
+
+  html[data-reveal] .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* 並んだ要素を少しずつ遅らせる */
+  html[data-reveal] .reveal[data-delay='1'] {
+    transition-delay: 0.09s;
+  }
+  html[data-reveal] .reveal[data-delay='2'] {
+    transition-delay: 0.18s;
+  }
+  html[data-reveal] .reveal[data-delay='3'] {
+    transition-delay: 0.27s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zoom-out img {
+    animation: none;
+  }
+}
+
+/* 画像のホバーで、ごくわずかに寄る */
+.zoomable {
+  overflow: hidden;
+}
+
+.zoomable img {
+  transition: transform 0.7s cubic-bezier(0.22, 0.61, 0.24, 1);
+}
+
+.card--link:hover .zoomable img,
+a:hover > .zoomable img {
+  transform: scale(1.04);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zoomable img {
+    transition: none;
+  }
+  .card--link:hover .zoomable img,
+  a:hover > .zoomable img {
+    transform: none;
+  }
 }
 
 /* ---------------- 横スクロール回避のための保険 ---------------- */

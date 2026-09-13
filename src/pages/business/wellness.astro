@@ -1,0 +1,443 @@
+---
+/**
+ * 細胞浴SALON 太古の甕
+ *
+ * ⚠ このサロンの運営会社は **JWORLD CO.,LTD（ジェイワールド株式会社）** であり、
+ *   Japan World株式会社の直接事業ではない。
+ *   このページはサロンそのものを扱う詳細ページなので、
+ *   取り違えが起きないよう、事業概要の冒頭と meta description で運営会社を明記している。
+ *   （トップページと /business/ では当社の事業として並べない）
+ *
+ * ⚠ 健康に関わる表現の扱いは docs/05-health-content-review.md を参照。
+ *   「治る」「効く」といった効能をうたう表現は使わず、
+ *   安全に関わる注意事項は原文のまま省略せずに掲載している。
+ */
+import Base from '../../layouts/Base.astro';
+import Picture from '../../components/Picture.astro';
+import PageHero from '../../components/PageHero.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import { COMPANY, HOTEL, EXTERNAL, OPERATORS, pathFor } from '../../data/site';
+import { getBusiness } from '../../data/business';
+import { organization, webSite, breadcrumbs } from '../../data/jsonld';
+
+const biz = getBusiness('wellness');
+
+/** ご入浴の流れ。現行サイト /salon の記載をそのまま保持している。 */
+const flow = [
+  {
+    title: 'カウンセリング',
+    body: 'ご利用前に体調などを確認し、細胞浴についての注意事項をご説明いたします。',
+  },
+  { title: 'お着替え', body: '専用の着衣にお着替えいただき、温浴の準備を整えます。' },
+  {
+    title: '甕内での温熱入浴',
+    body: '太古の甕の中で温かなスチームに包まれ、約15分〜25分間の温熱入浴を行います。',
+  },
+  {
+    title: 'クールダウン',
+    body: '発汗後はゆっくりと身体を整え、お着替えいただき終了となります。',
+  },
+];
+
+/** ⚠ 安全に関わる内容のため、原文から1項目も削っていない。 */
+const cautions = [
+  '飲酒後、泥酔状態の方は絶対に細胞浴をしないでください。',
+  '飲食の直前および直後、特に直後はご入浴をお控えください。',
+  '発熱している方、炎症のある方は、ご入浴をお控えください。',
+  '心臓に疾患のある方、高血圧・低血圧、糖尿病の方は、細胞浴前にハチミツの入ったぬるま湯を1杯お飲みになってからのご入浴をおすすめいたします。',
+  '太古の甕は医療機器ではなく、病気の治療を目的とした製品ではありませんので、あらかじめご了承ください。',
+  'ゆっくりと気持ちよくなってきますので、ご入浴中は眠らないようにしてください。',
+  '最適な細胞浴時間は15分間〜25分間。個人差がありますので、ご自分の体調に合わせてご入浴ください。',
+  '細胞浴は代謝作用が旺盛になりますので、脱水症状を防ぐために、細胞浴前にできるだけ水分をお取りください。',
+  'ご入浴後は、だるさやめまい等を感じる場合もありますので、少しの間静かにお休みください。',
+];
+
+const info: [string, string][] = [
+  ['営業時間', '16:00〜21:00（最終受付 20:00）'],
+  ['ご利用定員', '1日数組限定'],
+  ['ご予約', 'ご利用日の2〜3日前までの事前予約がおすすめです。'],
+  ['場所', `${HOTEL.name}　館内`],
+];
+---
+
+<Base
+  title="ウェルネス｜細胞浴SALON 太古の甕"
+  description="JWORLD CO.,LTD が運営する細胞浴SALON「太古の甕」。天然鉱石「樹紋石」を敷き詰めた大きな甕による温浴サロンです。楽気ハウス那須の館内にあります。ご入浴の流れとご利用案内。要事前予約。"
+  path={pathFor('wellness')}
+  ogImage="salon/kame-open"
+  preloadImage={{ name: biz.hero, sizes: '100vw' }}
+  jsonLd={[
+    webSite(),
+    organization(),
+    breadcrumbs([
+      { key: 'business', name: '事業紹介' },
+      { key: 'wellness', name: 'ウェルネス' },
+    ]),
+  ]}
+>
+  <PageHero
+    eyebrow="Wellness"
+    title="細胞浴SALON 太古の甕"
+    lead="天然鉱石「樹紋石」を敷き詰めた大きな甕に入り、温かなスチームに包まれる温浴サロンです。"
+    image={biz.hero}
+    priority
+  />
+  <Breadcrumbs trail={['business', 'wellness']} />
+
+  {/* ============ 事業概要 ============ */}
+  <section class="section">
+    <div class="wrap-narrow">
+      <p class="eyebrow reveal">Overview</p>
+      <h2 class="section-title reveal" data-delay="1">事業概要</h2>
+      <hr class="rule reveal" data-delay="1" />
+      <p class="operator reveal" data-delay="2">
+        <span class="operator__label">運営</span>
+        <span class="operator__name">{OPERATORS.jworld.name}</span>
+      </p>
+
+      <div class="stack prose reveal" data-delay="2">
+        <p>
+          細胞浴SALON「太古の甕」は、{OPERATORS.jworld.shortName}が運営する温浴サロンです。{
+            COMPANY.name
+          }が運営する Resort Hotel 楽気ハウス那須の館内にあり、ご宿泊とあわせてご利用いただけます。
+        </p>
+        <p>
+          世界一の長寿村として知られる中国・巴馬（バーマ）村。その豊かな自然と大地の恵みに育まれた暮らしに着想を得た、「Bauma
+          Healing」をコンセプトとしています。
+        </p>
+        <p>
+          太古から続く大地の恵みに包まれるように、身体をゆっくりと温めながら、ゆったりとした時間をお過ごしいただきます。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  {/* ============ 特徴 ============ */}
+  <section class="section section--paper">
+    <div class="wrap">
+      <div class="split reveal">
+        <div class="split__text">
+          <p class="eyebrow">Feature 01</p>
+          <h2 class="section-title">太古の甕（かたち）とは</h2>
+          <hr class="rule" />
+          <p>
+            「太古の甕」は、人がすっぽりと入れるほどの大きな甕（かめ）を用いて行う細胞浴です。甕の内側には、「樹紋石（じゅもんせき）」をはじめとする薬石が敷き詰められています。
+          </p>
+          <p>その自然の特性を活かして、甕の中で身体全体をやさしく包み込むように温めます。</p>
+        </div>
+        <figure class="figure">
+          <div class="zoomable">
+            <Picture name="salon/kame-open" sizes="(min-width: 860px) 46vw, 92vw" ratio="4/3" />
+          </div>
+        </figure>
+      </div>
+
+      <div class="split split--reverse featureGap reveal">
+        <figure class="figure">
+          <div class="zoomable">
+            <Picture name="salon/jumonseki" sizes="(min-width: 860px) 46vw, 92vw" ratio="4/3" />
+          </div>
+          <figcaption>木目のような模様が層状に表れた天然鉱石「樹紋石」</figcaption>
+        </figure>
+        <div class="split__text">
+          <p class="eyebrow">Feature 02</p>
+          <h2 class="section-title">天然鉱石「樹紋石」</h2>
+          <hr class="rule" />
+          <p>
+            約2億4千万年前から存在するといわれる樹紋石は、中国・内モンゴル地域などで産出される天然鉱石のひとつ。木目調の模様が特徴で、太古の地層に由来する自然素材として知られています。
+          </p>
+          <p>
+            樹紋石にはゲルマニウムが含まれるとされ、遠赤外線やマイナスイオンを発する特性にも注目されています。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* ============ サービス内容（ご入浴の流れ） ============ */}
+  <section class="section">
+    <div class="wrap">
+      <p class="eyebrow reveal">Flow</p>
+      <h2 class="section-title reveal" data-delay="1">ご入浴の流れ</h2>
+      <hr class="rule reveal" data-delay="1" />
+
+      <ol class="flow">
+        {
+          flow.map((step, i) => (
+            <li class="flow__item reveal" data-delay={String(Math.min(i, 3))}>
+              <p class="flow__n" aria-hidden="true">
+                {String(i + 1).padStart(2, '0')}
+              </p>
+              <h3 class="flow__title">{step.title}</h3>
+              <p class="flow__body">{step.body}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  {/* ============ ご利用案内 ============ */}
+  <section class="section section--paper">
+    <div class="wrap-narrow">
+      <p class="eyebrow reveal">Information</p>
+      <h2 class="section-title reveal" data-delay="1">ご利用案内</h2>
+      <hr class="rule reveal" data-delay="1" />
+
+      <dl class="dl infoDl reveal" data-delay="2">
+        {
+          info.map(([label, value]) => (
+            <div class="dl__row">
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+      <ul class="notes infoNotes reveal" data-delay="2">
+        <li>
+          当日のご予約も承っておりますが、空き状況やスタッフの対応状況によりお受けできない場合がございます。
+        </li>
+      </ul>
+
+      <p class="btn-row infoBtns reveal" data-delay="3">
+        <a class="btn btn--primary" href={`tel:${HOTEL.telHref}`}>
+          TEL {HOTEL.tel} でご予約
+        </a>
+      </p>
+      <p class="small muted infoTel reveal" data-delay="3">
+        受付 {HOTEL.telHours}（Resort Hotel 楽気ハウス那須）
+      </p>
+    </div>
+  </section>
+
+  {/* ============ ご注意とお願い ============ */}
+  <section class="section">
+    <div class="wrap-narrow">
+      <p class="eyebrow reveal">Please Read</p>
+      <h2 class="section-title reveal" data-delay="1">ご入浴においてのご注意とお願い</h2>
+      <hr class="rule reveal" data-delay="1" />
+
+      <ul class="ticks cautions reveal" data-delay="2">
+        {cautions.map((c) => <li>{c}</li>)}
+      </ul>
+
+      <p class="callout disclaimer reveal" data-delay="2">
+        ※太古の甕は医療機器ではなく、病気の治療を目的とした製品ではありません。感じ方には個人差があります。
+      </p>
+    </div>
+  </section>
+
+  {/* ============ 関連ページ・外部サイト ============ */}
+  <section class="section section--paper">
+    <div class="wrap">
+      <p class="eyebrow reveal">Links</p>
+      <h2 class="section-title reveal" data-delay="1">関連ページ</h2>
+      <hr class="rule reveal" data-delay="1" />
+
+      <ul class="linkCards reveal" data-delay="2">
+        <li>
+          <a class="linkCard" href={pathFor('beauty')}>
+            <span class="linkCard__label">同じ館内のサロン</span>
+            <span class="linkCard__title">Esthetic Salon RICHIA</span>
+            <span class="linkCard__text">
+              フェイシャルとボディのエステティック。細胞浴とあわせてご利用いただけます。
+            </span>
+          </a>
+        </li>
+        <li>
+          <a class="linkCard" href={pathFor('hospitality')}>
+            <span class="linkCard__label">サロンのある施設</span>
+            <span class="linkCard__title">Resort Hotel 楽気ハウス那須</span>
+            <span class="linkCard__text">
+              温泉大浴場と露天風呂を備えた、那須高原のリゾートホテルです。
+            </span>
+          </a>
+        </li>
+        <li>
+          <a class="linkCard ext" href={EXTERNAL.saibouyoku} target="_blank" rel="noopener">
+            <span class="linkCard__label">外部サイト</span>
+            <span class="linkCard__title">細胞浴SALON 太古の甕 公式サイト</span>
+            <span class="linkCard__text">
+              樹紋石と細胞浴について、さらに詳しくご紹介しています。
+            </span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <CtaBand
+    heading="細胞浴について、お気軽にご相談ください"
+    body="ご利用の可否や当日のご予約については、サロンのある Resort Hotel 楽気ハウス那須へ直接お問い合わせください。Japan World株式会社へのご連絡はお問い合わせページから承ります。"
+  />
+</Base>
+
+<style>
+  .operator {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6em;
+    flex-wrap: wrap;
+    margin-top: clamp(1.75rem, 4vw, 2.25rem);
+    padding: 0.7rem 1rem;
+    background: var(--paper-2);
+    border-inline-start: 3px solid var(--gold);
+  }
+
+  .operator__label {
+    flex: none;
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    color: var(--ink-50);
+  }
+
+  .operator__label::after {
+    content: "：";
+    margin-inline-start: -0.15em;
+  }
+
+  .operator__name {
+    font-size: var(--step--1);
+    font-weight: 600;
+    color: var(--ink-70);
+  }
+
+  .prose {
+    line-height: 2.1;
+    margin-top: 1.5rem;
+  }
+
+  .featureGap {
+    margin-top: clamp(3rem, 7vw, 5rem);
+  }
+
+  /* ---------------- ご入浴の流れ ---------------- */
+  .flow {
+    list-style: none;
+    padding: 0;
+    margin: clamp(2rem, 5vw, 3rem) 0 0;
+    display: grid;
+    gap: clamp(1.5rem, 3vw, 2rem);
+    counter-reset: none;
+  }
+
+  @media (min-width: 700px) {
+    .flow {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1000px) {
+    .flow {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  .flow__item {
+    background: var(--white);
+    border: 1px solid var(--line-soft);
+    border-top: 2px solid var(--gold);
+    padding: clamp(1.25rem, 2.5vw, 1.75rem);
+  }
+
+  .flow__n {
+    font-family: var(--serif);
+    font-size: var(--step-2);
+    color: var(--gold);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.6rem;
+  }
+
+  .flow__title {
+    font-size: var(--step-1);
+  }
+
+  .flow__body {
+    margin-top: 0.85rem;
+    font-size: var(--step--1);
+    line-height: 1.95;
+    color: var(--ink-70);
+  }
+
+  /* ---------------- ご利用案内 ---------------- */
+  .infoDl {
+    margin-top: clamp(1.75rem, 4vw, 2.25rem);
+  }
+
+  .infoNotes {
+    margin-top: 1.1rem;
+  }
+
+  .infoBtns {
+    margin-top: 2rem;
+  }
+
+  .infoTel {
+    margin-top: 0.75rem;
+  }
+
+  /* ---------------- ご注意 ---------------- */
+  .cautions {
+    margin-top: clamp(1.75rem, 4vw, 2.25rem);
+  }
+
+  .disclaimer {
+    margin-top: 2rem;
+  }
+
+  /* ---------------- 関連ページ ---------------- */
+  .linkCards {
+    list-style: none;
+    padding: 0;
+    margin: clamp(1.75rem, 4vw, 2.5rem) 0 0;
+    display: grid;
+    gap: clamp(1rem, 2.5vw, 1.5rem);
+  }
+
+  @media (min-width: 760px) {
+    .linkCards {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .linkCard {
+    display: grid;
+    gap: 0.5rem;
+    height: 100%;
+    background: var(--white);
+    border: 1px solid var(--line-soft);
+    padding: clamp(1.25rem, 2.5vw, 1.75rem);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .linkCard:hover {
+    border-color: var(--ai-100);
+    box-shadow: var(--shadow);
+    color: inherit;
+  }
+
+  .linkCard__label {
+    font-size: 0.6875rem;
+    letter-spacing: 0.18em;
+    color: var(--ai-600);
+    font-weight: 600;
+  }
+
+  .linkCard__title {
+    font-family: var(--serif);
+    font-size: var(--step-1);
+    font-weight: 600;
+    color: var(--ai-900);
+    line-height: 1.5;
+  }
+
+  .linkCard__text {
+    font-size: var(--step--1);
+    color: var(--ink-70);
+    line-height: 1.9;
+  }
+</style>

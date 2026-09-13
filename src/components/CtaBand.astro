@@ -1,77 +1,36 @@
 ---
-import { HOTEL, bookingUrl, pathFor, type Lang } from '../data/site';
-import type { Dict } from '../i18n/types';
+/**
+ * 下層ページの末尾に置く問い合わせ導線。
+ */
+import { COMPANY, pathFor } from '../data/site';
 
 interface Props {
-  lang: Lang;
-  t: Dict;
+  heading?: string;
+  body?: string;
 }
-const { lang, t } = Astro.props;
+const {
+  heading = 'お問い合わせ',
+  body = '事業・サービスに関するご相談、取材のお申し込みなど、お気軽にご連絡ください。',
+} = Astro.props;
 ---
 
-<aside class="band">
+<section class="band">
   <div class="wrap band__inner">
-    <p class="eyebrow">Reservation</p>
-    <h2 class="band__title">{t.pages.home.bookingHeading}</h2>
-    <p class="band__lead">{t.pages.home.bookingLead}</p>
-    <div class="btn-row band__btns">
-      <a class="btn btn--onDark ext" href={bookingUrl(lang)} target="_blank" rel="noopener">
-        {t.booking.generalCta}
+    <h2 class="section-title">{heading}</h2>
+    <p class="band__body">{body}</p>
+    <div class="btn-row">
+      <a class="btn btn--onDark" href={pathFor('contact')}>お問い合わせページへ</a>
+      <a class="btn btn--outlineDark" href={`tel:${COMPANY.telHref}`}>
+        TEL {COMPANY.tel}
       </a>
-      <a class="btn btn--outlineDark" href={pathFor(lang, 'booking')}>{t.booking.routesCta}</a>
     </div>
-    <p class="band__tel">
-      <a href={`tel:${HOTEL.telHref}`}>TEL {HOTEL.tel}</a>
-      <span>{t.ui.telHoursLabel} {HOTEL.telHours}</span>
-    </p>
   </div>
-</aside>
+</section>
 
 <style>
-  /* 濃紺の帯の上では既定の藍色だと沈むため、金色に置き換える */
-  .band .eyebrow {
-    color: var(--gold-soft);
-  }
-
-  .band__title {
-    font-size: var(--step-3);
-  }
-
-  .band__lead {
-    max-width: 48ch;
-    color: #c8d6e0;
-    font-size: var(--step-0);
-  }
-
-  .band__btns {
-    justify-content: center;
-  }
-
-  .band__tel {
-    margin: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 0.9rem;
-    align-items: baseline;
-    justify-content: center;
-  }
-
-  .band__tel a {
-    color: #fff;
-    font-size: var(--step-2);
-    font-family: var(--serif);
-    letter-spacing: 0.04em;
-    text-decoration: none;
-    min-height: 40px;
-    display: inline-block;
-  }
-
-  .band__tel a:hover {
-    text-decoration: underline;
-  }
-
-  .band__tel span {
-    color: #9db0c0;
-    font-size: var(--step--1);
+  .band__body {
+    max-width: 38em;
+    line-height: 2;
+    color: #cfdde7;
   }
 </style>

@@ -1,0 +1,36 @@
+---
+/**
+ * お知らせの一覧表示。トップページと一覧ページで共有する。
+ */
+import { pathFor } from '../data/site';
+import { formatDate, type NewsItem } from '../data/news';
+
+interface Props {
+  items: NewsItem[];
+  emptyText?: string;
+}
+const { items, emptyText = '現在お知らせはありません。' } = Astro.props;
+const base = pathFor('news');
+---
+
+{
+  items.length > 0 ? (
+    <ul class="news-list">
+      {items.map((item) => (
+        <li>
+          <a class="news-item" href={`${base}${item.id}/`}>
+            <span class="news-item__meta">
+              <time class="news-item__date" datetime={item.publishedAt}>
+                {formatDate(item.publishedAt)}
+              </time>
+              <span class="tag">{item.category.name}</span>
+            </span>
+            <span class="news-item__title">{item.title}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p class="muted">{emptyText}</p>
+  )
+}

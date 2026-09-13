@@ -69,57 +69,86 @@ if (BASE) {
     });
 }
 
-const LANGS = ['', '/en', '/zh', '/vi'];
+/** 廃止した言語プレフィックス。いずれも日本語ページへ送る */
+const LANGS = ['/en', '/zh', '/vi'];
 
-/** 旧スラッグ → 新パス断片 */
+const P = {
+  home: '/',
+  business: '/business/',
+  wellness: '/business/wellness/',
+  beauty: '/business/beauty/',
+  hospitality: '/business/hospitality/',
+  company: '/company/',
+  news: '/news/',
+  contact: '/contact/',
+};
+
+/**
+ * 旧スラッグ → 新パス。
+ * a) Wix 時代のページ、b) ホテル中心だった前構成 の両方を含む。
+ */
 const SLUGS = [
-  ['/rakihouse', '/raki-house/'],
-  ['/楽気ハウス-那須', '/raki-house/'],
-  ['/lobby', '/raki-house/'],
-  ['/about', '/raki-house/'],
-  ['/room', '/raki-house/rooms/'],
-  ['/spa', '/raki-house/spa/'],
-  ['/restaurant-and-bar', '/raki-house/dining/'],
-  ['/banquethall', '/raki-house/banquet/'],
-  ['/salon', '/raki-house/salon/'],
-  ['/about-5', '/membership/'],
-  ['/companyprofile', '/company/'],
+  // a. Wix 時代
+  ['/rakihouse', P.hospitality],
+  ['/楽気ハウス-那須', P.hospitality],
+  ['/lobby', P.hospitality],
+  ['/about', P.hospitality],
+  ['/room', P.hospitality],
+  ['/spa', P.hospitality],
+  ['/restaurant-and-bar', P.hospitality],
+  ['/banquethall', P.hospitality],
+  ['/salon', P.wellness],
+  ['/about-5', P.hospitality],
+  ['/companyprofile', P.company],
+
+  // b. ホテル中心だった前構成
+  ['/raki-house', P.hospitality],
+  ['/raki-house/rooms', P.hospitality],
+  ['/raki-house/spa', P.hospitality],
+  ['/raki-house/dining', P.hospitality],
+  ['/raki-house/banquet', P.hospitality],
+  ['/raki-house/nasu', P.hospitality],
+  ['/raki-house/salon', P.wellness],
+  ['/booking', P.hospitality],
+  ['/membership', P.hospitality],
+  ['/access', P.hospitality],
 ];
 
 /** [パス, 期待ステータス, 期待Location（301/302のとき）] */
 const CASES = [];
 
-// --- 1. 旧ページURL（4言語 × 11 = 44）---
-for (const lang of LANGS) {
-  for (const [oldSlug, newTail] of SLUGS) {
-    CASES.push([`${lang}${oldSlug}`, 301, `${CANON}${lang}${newTail}`]);
-  }
+// --- 1. 旧ページURL（日本語）---
+for (const [oldSlug, newPath] of SLUGS) {
+  CASES.push([oldSlug, 301, `${CANON}${newPath}`]);
+  CASES.push([`${oldSlug}/`, 301, `${CANON}${newPath}`]);
 }
 
-// --- 2. 各言語トップ（末尾スラッシュ付与）---
-CASES.push(['/en', 301, `${CANON}/en/`]);
-CASES.push(['/zh', 301, `${CANON}/zh/`]);
-CASES.push(['/vi', 301, `${CANON}/vi/`]);
+// --- 2. 多言語URL → 対応する日本語ページ ---
+for (const lang of LANGS) {
+  CASES.push([lang, 301, `${CANON}${P.home}`]);
+  CASES.push([`${lang}/`, 301, `${CANON}${P.home}`]);
+  CASES.push([`${lang}/company`, 301, `${CANON}${P.company}`]);
+  for (const [oldSlug, newPath] of SLUGS) {
+    CASES.push([`${lang}${oldSlug}`, 301, `${CANON}${newPath}`]);
+  }
+  // 対応表に無い多言語URLもトップへ着地させる（404 にしない）
+  CASES.push([`${lang}/whatever/deep/path`, 301, `${CANON}${P.home}`]);
+}
 
 // --- 3. 新URL は 200 ---
 const NEW_PATHS = [
-  '/',
-  '/raki-house/',
-  '/raki-house/rooms/',
-  '/raki-house/spa/',
-  '/raki-house/dining/',
-  '/raki-house/banquet/',
-  '/raki-house/salon/',
-  '/raki-house/nasu/',
-  '/booking/',
-  '/membership/',
-  '/access/',
-  '/company/',
+  P.home,
+  P.business,
+  P.wellness,
+  P.beauty,
+  P.hospitality,
+  P.company,
+  P.news,
+  P.contact,
+  '/news/nasu-accommodation-tax-2026/',
 ];
-for (const lang of LANGS) {
-  for (const p of NEW_PATHS) {
-    CASES.push([lang === '' ? p : `${lang}${p === '/' ? '/' : p}`, 200, null]);
-  }
+for (const p of NEW_PATHS) {
+  CASES.push([p, 200, null]);
 }
 
 // --- 4. Wix 固有パス ---
@@ -145,14 +174,14 @@ CASES.push(['/_serverless/abc', 410, null]);
 CASES.push(['/_functions/abc', 410, null]);
 
 // --- 5. 正規化 ---
-CASES.push(['/RAKIHOUSE', 301, `${CANON}/raki-house/`]);
-CASES.push(['/RakiHouse', 301, `${CANON}/raki-house/`]);
-CASES.push(['/rakihouse/', 301, `${CANON}/raki-house/`]);
-CASES.push(['/about-5/', 301, `${CANON}/membership/`]);
-CASES.push(['/EN/ABOUT-5', 301, `${CANON}/en/membership/`]);
-CASES.push(['/raki-house', 301, `${CANON}/raki-house/`]);
-CASES.push(['/booking', 301, `${CANON}/booking/`]);
-CASES.push(['/booking?utm_source=x', 301, `${CANON}/booking/?utm_source=x`]);
+CASES.push(['/RAKIHOUSE', 301, `${CANON}${P.hospitality}`]);
+CASES.push(['/RakiHouse', 301, `${CANON}${P.hospitality}`]);
+CASES.push(['/SALON', 301, `${CANON}${P.wellness}`]);
+CASES.push(['/EN/ABOUT-5', 301, `${CANON}${P.hospitality}`]);
+CASES.push(['/business/wellness', 301, `${CANON}${P.wellness}`]);
+CASES.push(['/company', 301, `${CANON}${P.company}`]);
+CASES.push(['/news', 301, `${CANON}${P.news}`]);
+CASES.push(['/booking?utm_source=x', 301, `${CANON}${P.hospitality}?utm_source=x`]);
 CASES.push(['/?lightbox=abc', 301, `${CANON}/`]);
 
 // --- 6. 静的ファイル ---

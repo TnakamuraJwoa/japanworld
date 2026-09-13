@@ -1,36 +1,49 @@
 ---
-import { pathFor, MAIN_NAV, HOTEL_SECTION, LANGS, LANG_META, type Lang, type RouteKey } from '../data/site';
-import { EXTERNAL } from '../data/site';
-import type { Dict } from '../i18n/types';
+/**
+ * サイト共通のヘッダー。
+ *
+ * - グローバルナビ（事業紹介 / 会社情報 / お知らせ / お問い合わせ）
+ * - 事業紹介の配下では、第2段に事業サブナビを出す
+ * - スマートフォンではハンバーガーで開閉するドロワー
+ *
+ * 言語切替は廃止（日本語単独サイト）。
+ */
+import { pathFor, MAIN_NAV, BUSINESS_SECTION, ROUTE_LABEL, type RouteKey } from '../data/site';
 
 interface Props {
-  lang: Lang;
-  t: Dict;
-  current: RouteKey;
+  /** 表示中のページの絶対パス（例 /business/wellness/） */
+  path: string;
 }
-const { lang, t, current } = Astro.props;
+const { path } = Astro.props;
 
-const inHotelSection = HOTEL_SECTION.includes(current);
-const homeHref = pathFor(lang, 'home');
+const businessRoot = pathFor('business');
+const inBusiness = path.startsWith(businessRoot);
+
+/** そのナビ項目が「現在地」か。配下ページでも親を現在地として扱う */
+function isCurrent(key: RouteKey): boolean {
+  const href = pathFor(key);
+  if (key === 'home') return path === '/';
+  if (key === 'business') return inBusiness;
+  return path === href || path.startsWith(href);
+}
 ---
 
 <header class="site-header">
   <div class="wrap site-header__bar">
-    <a class="brand" href={homeHref}>
+    <a class="brand" href={pathFor('home')}>
       <span class="brand__mark" aria-hidden="true">
-        <svg viewBox="0 0 64 40" width="40" height="25" focusable="false">
+        <svg viewBox="0 0 64 40" width="38" height="24" focusable="false">
           <path
             d="M2 6 L16 34 L32 12 L48 34 L62 6"
             fill="none"
             stroke="currentColor"
             stroke-width="7"
-            stroke-linejoin="miter"
-          ></path>
+            stroke-linejoin="miter"></path>
         </svg>
       </span>
       <span class="brand__text">
         <span class="brand__name">Japan World</span>
-        <span class="brand__sub">{t.ui.brandSub}</span>
+        <span class="brand__sub">Japan World株式会社</span>
       </span>
     </a>
 
@@ -42,72 +55,44 @@ const homeHref = pathFor(lang, 'home');
       data-nav-toggle
     >
       <span class="navToggle__bars" aria-hidden="true"><span></span><span></span><span></span></span>
-      <span class="navToggle__label">{t.ui.menu}</span>
+      <span class="navToggle__label">メニュー</span>
     </button>
 
-    <nav class="site-nav" id="site-nav" aria-label={t.ui.menu} data-nav>
+    <nav class="site-nav" id="site-nav" aria-label="グローバルナビゲーション" data-nav>
       <ul class="site-nav__list">
         {
           MAIN_NAV.map((key) => (
             <li>
-              <a
-                href={pathFor(lang, key)}
-                aria-current={key === current || (key === 'hotel' && inHotelSection) ? 'page' : undefined}
-              >
-                {t.nav[key]}
+              <a href={pathFor(key)} aria-current={isCurrent(key) ? 'page' : undefined}>
+                {ROUTE_LABEL[key]}
               </a>
             </li>
           ))
         }
       </ul>
-
-      <div class="site-nav__cta">
-        <a class="btn btn--primary btn--sm" href={pathFor(lang, 'booking')}>{t.ui.ctaBook}</a>
-        <a
-          class="btn btn--ghost btn--sm ext"
-          href={EXTERNAL.members}
-          target="_blank"
-          rel="noopener">{t.ui.ctaMembers}</a
-        >
-      </div>
-
-      <div class="langs" aria-label={t.ui.languageLabel}>
-        <span class="langs__label">{t.ui.languageLabel}</span>
-        <ul>
-          {
-            LANGS.map((l) => (
-              <li>
-                <a
-                  href={pathFor(l, current)}
-                  hreflang={LANG_META[l].hreflang}
-                  lang={LANG_META[l].htmlLang}
-                  aria-current={l === lang ? 'true' : undefined}
-                >
-                  {LANG_META[l].label}
-                </a>
-              </li>
-            ))
-          }
-        </ul>
-      </div>
     </nav>
   </div>
 
-  <!-- 施設ページ（客室・温泉・ダイニング・宴会場・スパ＆サロン・那須高原）は
-       どのページからも辿れるよう、第2段のナビを常時表示する。 -->
-  <nav class="subnav" aria-label={t.nav.hotel}>
-    <div class="wrap subnav__inner scroll-x">
-      <ul>
-        {HOTEL_SECTION.map((key) => (
-          <li>
-            <a href={pathFor(lang, key)} aria-current={key === current ? 'page' : undefined}>
-              {t.nav[key]}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </div>
-  </nav>
+  {
+    inBusiness && (
+      <nav class="subnav" aria-label="事業紹介">
+        <div class="wrap subnav__inner scroll-x">
+          <ul>
+            {BUSINESS_SECTION.map((key) => (
+              <li>
+                <a
+                  href={pathFor(key)}
+                  aria-current={path === pathFor(key) ? 'page' : undefined}
+                >
+                  {key === 'business' ? '事業紹介トップ' : ROUTE_LABEL[key]}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </nav>
+    )
+  }
 </header>
 
 <style>
@@ -115,7 +100,7 @@ const homeHref = pathFor(lang, 'home');
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(251, 249, 245, 0.96);
+    background: color-mix(in srgb, var(--paper) 96%, transparent);
     border-bottom: 1px solid var(--line-soft);
     backdrop-filter: saturate(140%) blur(8px);
   }
@@ -125,105 +110,111 @@ const homeHref = pathFor(lang, 'home');
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    min-height: 66px;
-    padding-block: 0.5rem;
+    min-height: 64px;
   }
 
-  /* ---- ブランド ---- */
+  @media (min-width: 1000px) {
+    .site-header__bar {
+      min-height: 76px;
+    }
+  }
+
+  /* ---------------- ブランド ---------------- */
   .brand {
     display: inline-flex;
     align-items: center;
     gap: 0.7rem;
     text-decoration: none;
-    color: var(--ink);
-    flex: 0 1 auto;
-    min-width: 0;
+    color: var(--ai-900);
+    padding-block: 0.5rem;
   }
 
   .brand__mark {
     color: var(--ai-700);
-    display: inline-flex;
-    flex: none;
+    display: block;
   }
 
   .brand__text {
     display: flex;
     flex-direction: column;
-    line-height: 1.25;
-    min-width: 0;
+    line-height: 1.2;
   }
 
   .brand__name {
     font-family: var(--serif);
-    font-size: 1.05rem;
-    letter-spacing: 0.06em;
+    font-size: 1.0625rem;
+    letter-spacing: 0.08em;
     font-weight: 600;
-    white-space: nowrap;
   }
 
   .brand__sub {
     font-size: 0.6875rem;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.08em;
     color: var(--ink-50);
-    white-space: nowrap;
+    margin-top: 0.2em;
   }
 
-  /* 狭い画面ではブランド名だけに絞る（ロゴの折返しを防ぐ） */
-  @media (max-width: 420px) {
-    .brand__sub {
-      font-size: 0.625rem;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 11rem;
-    }
-  }
-
-  /* ---- トグル ---- */
+  /* ---------------- ハンバーガー ---------------- */
   .navToggle {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    min-height: 44px;
-    padding: 0.4rem 0.7rem;
-    background: transparent;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
+    min-height: 48px;
+    min-width: 48px;
+    padding: 0 0.35rem;
+    background: none;
+    border: 0;
+    color: var(--ai-900);
     font: inherit;
-    font-size: 0.8125rem;
-    color: var(--ink);
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
     cursor: pointer;
   }
 
   .navToggle__bars {
     display: grid;
-    gap: 4px;
-    width: 18px;
+    gap: 5px;
+    width: 22px;
   }
 
   .navToggle__bars span {
     display: block;
-    height: 2px;
+    height: 1.5px;
     background: currentColor;
-    border-radius: 1px;
+    transition: transform 0.22s ease, opacity 0.18s ease;
   }
 
-  /* ---- ナビ ---- */
+  .navToggle[aria-expanded='true'] .navToggle__bars span:nth-child(1) {
+    transform: translateY(6.5px) rotate(45deg);
+  }
+
+  .navToggle[aria-expanded='true'] .navToggle__bars span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .navToggle[aria-expanded='true'] .navToggle__bars span:nth-child(3) {
+    transform: translateY(-6.5px) rotate(-45deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .navToggle__bars span {
+      transition: none;
+    }
+  }
+
+  /* ---------------- ナビ（スマートフォン） ---------------- */
   .site-nav {
+    position: fixed;
+    inset: 64px 0 0;
+    background: var(--paper);
+    padding: 1.5rem var(--gutter) 3rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     display: none;
   }
 
   .site-nav[data-open] {
     display: block;
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 100%;
-    background: var(--paper);
-    border-bottom: 1px solid var(--line);
-    box-shadow: var(--shadow);
-    padding: 1rem var(--gutter) 1.75rem;
-    max-height: calc(100dvh - 66px);
-    overflow-y: auto;
   }
 
   .site-nav__list {
@@ -234,238 +225,125 @@ const homeHref = pathFor(lang, 'home');
   }
 
   .site-nav__list a {
-    display: block;
-    padding: 0.85rem 0.25rem;
-    text-decoration: none;
-    color: var(--ink);
-    font-weight: 600;
+    display: flex;
+    align-items: center;
+    min-height: 60px;
+    padding-inline: 0.25rem;
     border-bottom: 1px solid var(--line-soft);
-  }
-
-  .site-nav__list a[aria-current] {
-    color: var(--ai-700);
-  }
-
-  .site-nav__cta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-    margin-top: 1.1rem;
-  }
-
-  .btn--sm {
-    min-height: 44px;
-    padding: 0.55rem 1.1rem;
-    font-size: 0.875rem;
-  }
-
-  .langs {
-    margin-top: 1.25rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--line-soft);
-  }
-
-  .langs__label {
-    display: block;
-    font-size: 0.75rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--ink-50);
-    margin-bottom: 0.5rem;
-  }
-
-  .langs ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem 1.1rem;
-  }
-
-  .langs a {
-    display: inline-block;
-    min-height: 40px;
-    line-height: 40px;
-    font-size: 0.875rem;
     text-decoration: none;
-    color: var(--ink-70);
-  }
-
-  .langs a[aria-current] {
-    color: var(--ai-700);
-    font-weight: 700;
-  }
-
-  /* ---- サブナビ ---- */
-  .subnav {
-    position: relative;
-    border-top: 1px solid var(--line-soft);
-    background: var(--white);
-  }
-
-  /* 項目が入りきらない幅では右端をぼかし、横スクロールできることを示す */
-  @media (max-width: 899px) {
-    .subnav::after {
-      content: '';
-      position: absolute;
-      inset-block: 0;
-      right: 0;
-      width: 2.5rem;
-      background: linear-gradient(to right, rgba(255, 255, 255, 0), var(--white));
-      pointer-events: none;
-    }
-  }
-
-  .subnav__inner {
-    padding-block: 0;
-  }
-
-  .subnav ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    gap: 0.25rem;
-    white-space: nowrap;
-  }
-
-  .subnav a {
-    display: inline-block;
-    padding: 0.8rem 0.85rem;
-    font-size: 0.8125rem;
+    color: var(--ai-900);
+    font-size: 1.0625rem;
     font-weight: 600;
-    text-decoration: none;
-    color: var(--ink-70);
-    border-bottom: 2px solid transparent;
+    letter-spacing: 0.04em;
   }
 
-  .subnav a[aria-current] {
-    color: var(--ai-700);
-    border-bottom-color: var(--ai-700);
+  .site-nav__list a[aria-current='page'] {
+    color: var(--ai-600);
   }
 
-  /* ================= デスクトップ =================
-     版面は .wrap の 1160px で頭打ちになるため、1160px を超える画面幅でも
-     ヘッダー内で使える幅は増えない。つまり「画面を広げれば入る」ことはない。
-     そこで
-       ・ナビの文字サイズは 0.8125rem のまま（可読性を優先して縮めない）
-       ・余白・間隔だけを詰めて約 90px を捻出する
-       ・それでも版面に収まらない言語ではブランドのサブ行を出さない
-     という順序で解決している。                                        */
+  .site-nav__list a[aria-current='page']::after {
+    content: '';
+    margin-inline-start: 0.6em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--gold);
+  }
+
+  /* ---------------- ナビ（PC） ---------------- */
   @media (min-width: 1000px) {
     .navToggle {
       display: none;
     }
 
-    .site-header__bar {
-      min-height: 78px;
-      gap: 1rem;
-    }
-
-    .brand {
-      gap: 0.55rem;
-    }
-
-    .brand__name {
-      font-size: 1.0625rem;
-    }
-
-    .brand__sub {
-      font-size: 0.75rem;
-    }
-
     .site-nav {
-      display: flex;
-      align-items: center;
-      gap: 0.9rem;
-      flex: 1 1 auto;
-      justify-content: flex-end;
+      position: static;
+      display: block;
+      background: none;
+      padding: 0;
+      overflow: visible;
+      inset: auto;
     }
 
     .site-nav__list {
       grid-auto-flow: column;
-      gap: 0.1rem;
+      gap: 0.35rem;
+      align-items: center;
     }
 
     .site-nav__list a {
-      border-bottom: 0;
-      padding: 0.5rem 0.45rem;
-      font-size: 0.8125rem;
-      font-weight: 600;
+      min-height: 44px;
+      border: 0;
+      font-size: 0.9375rem;
+      padding-inline: 1rem;
       position: relative;
-      white-space: nowrap;
+      letter-spacing: 0.06em;
     }
 
-    .site-nav__list a[aria-current]::after {
+    .site-nav__list a::before {
       content: '';
       position: absolute;
-      left: 0.45rem;
-      right: 0.45rem;
-      bottom: 0.1rem;
-      height: 2px;
-      background: var(--ai-700);
+      left: 1rem;
+      right: 1rem;
+      bottom: 0.55rem;
+      height: 1px;
+      background: var(--gold);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.24s ease;
     }
 
-    .site-nav__cta {
-      margin-top: 0;
-      flex-wrap: nowrap;
-      gap: 0.45rem;
+    .site-nav__list a:hover::before,
+    .site-nav__list a[aria-current='page']::before {
+      transform: scaleX(1);
     }
 
-    .site-nav__cta .btn {
-      white-space: nowrap;
-      padding-inline: 0.7rem;
-    }
-
-    .langs {
-      margin: 0;
-      padding: 0 0 0 0.75rem;
-      border-top: 0;
-      border-left: 1px solid var(--line-soft);
-      flex: none;
-    }
-
-    .langs__label {
+    .site-nav__list a[aria-current='page']::after {
       display: none;
     }
 
-    .langs ul {
-      gap: 0;
-      flex-wrap: nowrap;
-    }
-
-    .langs a {
-      min-height: 0;
-      line-height: 1.4;
-      font-size: 0.6875rem;
-      padding: 0.35rem 0.22rem;
-      white-space: nowrap;
+    @media (prefers-reduced-motion: reduce) {
+      .site-nav__list a::before {
+        transition: none;
+      }
     }
   }
 
-  /* 1000〜1240px はロゴ横のサブ行を出す余地がないため隠す。
-     ナビの文字サイズは縮めない。 */
-  @media (min-width: 1000px) and (max-width: 1240px) {
-    .brand__sub {
-      display: none;
-    }
+  /* ---------------- 第2段ナビ ---------------- */
+  .subnav {
+    border-top: 1px solid var(--line-soft);
+    background: var(--white);
   }
 
-  /* 1241px 以上でも、ナビ項目の文字列が長い言語は版面に収まらない。
-     途中で切って見せるより出さないほうが良いため、その言語だけ隠す。
-     （日本語・中国語は収まるので表示したまま）
-     ナビのラベルを短くできた場合は、この指定を外してよい。 */
-  @media (min-width: 1241px) {
-    html[lang='vi'] .brand__sub {
-      display: none;
-    }
+  .subnav__inner ul {
+    list-style: none;
+    display: flex;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
   }
 
-  @media (max-width: 999px) {
-    .site-header__bar {
-      position: relative;
-    }
+  .subnav__inner a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 48px;
+    padding-inline: 0.9rem;
+    white-space: nowrap;
+    text-decoration: none;
+    color: var(--ink-70);
+    font-size: 0.875rem;
+    letter-spacing: 0.04em;
+    border-bottom: 2px solid transparent;
+  }
+
+  .subnav__inner a:hover {
+    color: var(--ai-700);
+  }
+
+  .subnav__inner a[aria-current='page'] {
+    color: var(--ai-800);
+    font-weight: 600;
+    border-bottom-color: var(--gold);
   }
 </style>
 
@@ -476,8 +354,13 @@ const homeHref = pathFor(lang, 'home');
   if (toggle && nav) {
     const setOpen = (open: boolean) => {
       toggle.setAttribute('aria-expanded', String(open));
-      if (open) nav.setAttribute('data-open', '');
-      else nav.removeAttribute('data-open');
+      if (open) {
+        nav.setAttribute('data-open', '');
+        document.body.style.overflow = 'hidden';
+      } else {
+        nav.removeAttribute('data-open');
+        document.body.style.overflow = '';
+      }
     };
 
     toggle.addEventListener('click', () => {

@@ -404,6 +404,16 @@ export const IMAGES = [
     w: HERO_WIDTHS,
   },
   {
+    name: 'hero/corporate-resort',
+    src: 'jw-hero-resort.webp',
+    alt: '夕暮れの那須連山を背に、客室のあかりが灯る山あいのリゾートホテル',
+    // ⚠ 原画像が 1280×720 しかないため、ヒーロー用の 1600 / 2000 は生成できない。
+    //    引き伸ばすと粗くなるだけなので、原寸の 1280 を上限にしている。
+    //    1600px 以上の原画像に差し替えたら w: HERO_WIDTHS へ変更し、
+    //    npm run images -- --force で再生成すること。
+    w: [640, 1024, 1280],
+  },
+  {
     name: 'rooms/window-view',
     src: 'rk-room-window.webp',
     alt: '大きな窓から那須高原の森を望む客室',

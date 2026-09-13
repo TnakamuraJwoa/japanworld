@@ -1,97 +1,129 @@
 ---
+/**
+ * 下層ページ共通の見出し。
+ *
+ * 画像を渡したときだけ帯状のビジュアルを敷く。
+ * 画像がないページ（会社情報・お問い合わせなど）は文字だけの静かな見出しになる。
+ */
 import Picture from './Picture.astro';
 import type { ImageName } from '../data/images.generated';
 
 interface Props {
-  eyebrow?: string;
+  eyebrow: string;
   title: string;
   lead?: string;
-  image: ImageName;
+  image?: ImageName;
+  /** LCP になる場合に true */
   priority?: boolean;
 }
-const { eyebrow, title, lead, image, priority = true } = Astro.props;
+const { eyebrow, title, lead, image, priority = false } = Astro.props;
 ---
 
-<section class="pageHero">
-  <div class="pageHero__media">
-    <Picture
-      name={image}
-      priority={priority}
-      sizes="100vw"
-      class="pageHero__img"
-      alt=""
-    />
-  </div>
-  <div class="wrap pageHero__inner">
-    {eyebrow && <p class="eyebrow pageHero__eyebrow">{eyebrow}</p>}
-    <h1 class="pageHero__title">{title}</h1>
-    {lead && <p class="pageHero__lead">{lead}</p>}
-  </div>
-</section>
+{
+  image ? (
+    <section class="pagehero pagehero--media">
+      <div class="pagehero__media zoom-out">
+        <Picture name={image} alt="" sizes="100vw" priority={priority} class="pagehero__img" />
+      </div>
+      <div class="wrap pagehero__inner">
+        <p class="pagehero__eyebrow">{eyebrow}</p>
+        <h1 class="pagehero__title">{title}</h1>
+        {lead && <p class="pagehero__lead">{lead}</p>}
+      </div>
+    </section>
+  ) : (
+    <section class="pagehero">
+      <div class="wrap pagehero__inner">
+        <p class="pagehero__eyebrow">{eyebrow}</p>
+        <h1 class="pagehero__title">{title}</h1>
+        {lead && <p class="pagehero__lead">{lead}</p>}
+      </div>
+    </section>
+  )
+}
 
 <style>
-  .pageHero {
-    position: relative;
-    isolation: isolate;
-    background: var(--ai-900);
-    color: #fff;
+  .pagehero {
+    background: var(--paper-2);
+    border-bottom: 1px solid var(--line-soft);
   }
 
-  .pageHero__media {
+  .pagehero__inner {
+    padding-block: clamp(2.75rem, 7vw, 5rem);
+  }
+
+  .pagehero__eyebrow {
+    font-size: var(--step--1);
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--ai-600);
+    font-weight: 600;
+    margin-bottom: 0.9rem;
+  }
+
+  .pagehero__title {
+    font-size: var(--step-4);
+    line-height: 1.35;
+  }
+
+  .pagehero__lead {
+    margin-top: 1.25rem;
+    font-size: var(--step-1);
+    line-height: 1.9;
+    color: var(--ink-70);
+    max-width: 42em;
+  }
+
+  /* ---- 画像つき ---- */
+  .pagehero--media {
+    position: relative;
+    background: var(--ai-900);
+    border-bottom: 0;
+    isolation: isolate;
+    /* ズームアウト演出で画像が 1.08 倍から始まるため、
+       はみ出した分を必ず切り落とす（横スクロール防止） */
+    overflow: hidden;
+  }
+
+  .pagehero__media {
     position: absolute;
     inset: 0;
     z-index: -1;
   }
 
-  .pageHero__media :global(.pageHero__img) {
+  .pagehero__media :global(.pagehero__img) {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
 
-  .pageHero__media::after {
+  /* 文字を読ませるための覆い。画像の明るさに関わらず十分な
+     コントラスト比（4.5:1 以上）を確保するために濃いめに敷く。 */
+  .pagehero__media::after {
     content: '';
     position: absolute;
     inset: 0;
-    background:
-      linear-gradient(
-        to right,
-        rgba(4, 20, 33, 0.7) 0%,
-        rgba(4, 20, 33, 0.45) 45%,
-        rgba(4, 20, 33, 0.25) 80%
-      ),
-      linear-gradient(
-        to bottom,
-        rgba(4, 20, 33, 0.45) 0%,
-        rgba(4, 20, 33, 0.34) 45%,
-        rgba(4, 20, 33, 0.6) 100%
-      );
+    background: linear-gradient(
+      to right,
+      rgba(4, 26, 41, 0.84) 0%,
+      rgba(4, 26, 41, 0.66) 55%,
+      rgba(4, 26, 41, 0.48) 100%
+    );
   }
 
-  .pageHero__inner {
-    padding-block: clamp(3.5rem, 11vw, 7.5rem);
-    max-width: min(var(--max), 100%);
+  .pagehero--media .pagehero__inner {
+    padding-block: clamp(3.5rem, 10vw, 7rem);
   }
 
-  .pageHero__eyebrow {
-    color: #e5c778;
-    font-weight: 700;
-    text-shadow: 0 1px 10px rgba(0, 12, 22, 0.8);
+  .pagehero--media .pagehero__eyebrow {
+    color: var(--gold-soft);
   }
 
-  .pageHero__title {
-    font-size: var(--step-4);
+  .pagehero--media .pagehero__title {
     color: #fff;
-    max-width: 22ch;
-    text-shadow: 0 1px 16px rgba(0, 20, 35, 0.45);
   }
 
-  .pageHero__lead {
-    margin-top: 1.1rem;
-    max-width: 46ch;
-    font-size: var(--step-1);
-    line-height: 1.9;
-    color: #e4ecf2;
-    text-shadow: 0 1px 12px rgba(0, 20, 35, 0.45);
+  .pagehero--media .pagehero__lead {
+    color: #e2eaf0;
   }
 </style>

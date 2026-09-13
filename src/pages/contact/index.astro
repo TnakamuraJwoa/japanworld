@@ -1,0 +1,188 @@
+---
+/**
+ * お問い合わせ。
+ *
+ * ⚠ 入力フォームは設置していません。
+ *   送信先となるフォーム配信サービスの契約が必要になるため、
+ *   現時点では電話・メールのご案内にとどめています。
+ *   フォームが必要な場合は、利用するサービスをご指定ください。
+ */
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { COMPANY, HOTEL, EXTERNAL, pathFor } from '../../data/site';
+import { organization, webSite, breadcrumbs } from '../../data/jsonld';
+---
+
+<Base
+  title="お問い合わせ"
+  description="Japan World株式会社へのお問い合わせ窓口。事業・会員権・取材に関するご相談は本社まで、ご宿泊と館内サロンのご予約は Resort Hotel 楽気ハウス那須までご連絡ください。"
+  path={pathFor('contact')}
+  ogImage="lobby/atrium"
+  jsonLd={[webSite(), organization(), breadcrumbs([{ key: 'contact', name: 'お問い合わせ' }])]}
+>
+  <PageHero
+    eyebrow="Contact"
+    title="お問い合わせ"
+    lead="ご用件に応じて、お問い合わせ先が分かれています。下記よりお選びください。"
+  />
+  <Breadcrumbs trail={['contact']} />
+
+  <section class="section">
+    <div class="wrap">
+      <ul class="contacts">
+        {/* ---- 本社 ---- */}
+        <li class="contact contact--primary reveal">
+          <p class="contact__label">事業・会員権・取材について</p>
+          <h2 class="contact__title">{COMPANY.name}　本社</h2>
+          <dl class="dl contact__dl">
+            <div class="dl__row">
+              <dt>電話番号</dt>
+              <dd><a href={`tel:${COMPANY.telHref}`}>{COMPANY.tel}</a></dd>
+            </div>
+            <div class="dl__row">
+              <dt>メール</dt>
+              <dd><a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a></dd>
+            </div>
+            <div class="dl__row">
+              <dt>所在地</dt>
+              <dd>〒{COMPANY.postal}　{COMPANY.addressFull}</dd>
+            </div>
+          </dl>
+          <p class="btn-row contact__btns">
+            <a class="btn btn--primary" href={`tel:${COMPANY.telHref}`}>電話をかける</a>
+            <a class="btn btn--ghost" href={`mailto:${COMPANY.email}`}>メールを送る</a>
+          </p>
+        </li>
+
+        {/* ---- ホテル ---- */}
+        <li class="contact reveal" data-delay="1">
+          <p class="contact__label">ご宿泊・サロンのご予約について</p>
+          <h2 class="contact__title">{HOTEL.name}</h2>
+          <dl class="dl contact__dl">
+            <div class="dl__row">
+              <dt>電話番号</dt>
+              <dd>
+                <a href={`tel:${HOTEL.telHref}`}>{HOTEL.tel}</a>
+                <span class="contact__hours">（受付 {HOTEL.telHours}）</span>
+              </dd>
+            </div>
+            <div class="dl__row">
+              <dt>FAX</dt>
+              <dd>{HOTEL.fax}</dd>
+            </div>
+            <div class="dl__row">
+              <dt>所在地</dt>
+              <dd>〒{HOTEL.postal}　{HOTEL.addressFull}</dd>
+            </div>
+          </dl>
+          <p class="btn-row contact__btns">
+            <a class="btn btn--primary" href={`tel:${HOTEL.telHref}`}>電話をかける</a>
+            <a class="btn btn--ghost ext" href={EXTERNAL.hotelSite} target="_blank" rel="noopener">
+              ホテル公式サイト
+            </a>
+          </p>
+          <p class="contact__note small muted">
+            館内サロン（細胞浴SALON 太古の甕、Esthetic Salon RICHIA）のご予約も、こちらの番号で承っています。
+          </p>
+        </li>
+      </ul>
+
+      {/* ---- 会員の方 ---- */}
+      <div class="members reveal" data-delay="2">
+        <h2 class="members__title">楽気ハウス会員の方</h2>
+        <p class="members__body">
+          ご宿泊のご予約・ご変更は、会員専用予約システム「JWCCS」から承っています。ご利用にはご登録とログインが必要です。会員権のご契約内容に関するご相談は、本社までお問い合わせください。
+        </p>
+        <p class="btn-row">
+          <a class="btn btn--ghost ext" href={EXTERNAL.members} target="_blank" rel="noopener">
+            JWCCS にログイン
+          </a>
+          <a class="btn btn--ghost" href={pathFor('hospitality')}>会員権について</a>
+        </p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .contacts {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: clamp(1.25rem, 3vw, 2rem);
+  }
+
+  @media (min-width: 860px) {
+    .contacts {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .contact {
+    background: var(--white);
+    border: 1px solid var(--line-soft);
+    border-top: 2px solid var(--line);
+    padding: clamp(1.5rem, 3.5vw, 2.5rem);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .contact--primary {
+    border-top-color: var(--ai-700);
+  }
+
+  .contact:not(.contact--primary) {
+    border-top-color: var(--gold);
+  }
+
+  .contact__label {
+    font-size: 0.6875rem;
+    letter-spacing: 0.18em;
+    color: var(--ai-600);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .contact__title {
+    font-size: var(--step-2);
+    line-height: 1.5;
+  }
+
+  .contact__dl {
+    margin-top: 1.5rem;
+  }
+
+  .contact__hours {
+    color: var(--ink-50);
+    font-size: var(--step--1);
+    margin-inline-start: 0.4em;
+  }
+
+  .contact__btns {
+    margin-top: 1.75rem;
+  }
+
+  .contact__note {
+    margin-top: 1.25rem;
+  }
+
+  .members {
+    margin-top: clamp(2rem, 5vw, 3rem);
+    background: var(--paper-2);
+    border: 1px solid var(--line-soft);
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+  }
+
+  .members__title {
+    font-size: var(--step-2);
+  }
+
+  .members__body {
+    margin: 1rem 0 1.75rem;
+    line-height: 2.05;
+    max-width: 46em;
+    color: var(--ink-70);
+  }
+</style>

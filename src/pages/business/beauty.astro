@@ -1,0 +1,461 @@
+---
+/**
+ * Esthetic Salon RICHIA
+ *
+ * ⚠ このサロン（エステ事業）の運営会社は **JWORLD CO.,LTD（ジェイワールド株式会社）** であり、
+ *   Japan World株式会社の直接事業ではない。
+ *   このページはサロンそのものを扱う詳細ページなので、
+ *   取り違えが起きないよう、事業概要の冒頭と meta description で運営会社を明記している。
+ *   （トップページと /business/ では当社の事業として並べない）
+ *
+ * ⚠ 原文にあった「延べ1万人以上の肌に向き合ってきた」という実績値は、
+ *   裏づけが確認できないため数値を外した表現にしています（docs/05 #9）。
+ */
+import Base from '../../layouts/Base.astro';
+import Picture from '../../components/Picture.astro';
+import PageHero from '../../components/PageHero.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import { COMPANY, HOTEL, OPERATORS, pathFor } from '../../data/site';
+import { getBusiness } from '../../data/business';
+import { organization, webSite, breadcrumbs } from '../../data/jsonld';
+
+const biz = getBusiness('beauty');
+
+const facial: [string, string][] = [
+  ['ちょこエステ（30分）', '3,980円'],
+  ['フェイシャル（60分）', '8,000円'],
+  ['フェイシャル（90分）', '12,000円'],
+];
+
+const body: [string, string][] = [
+  ['フット or ショルダー（30分）', '3,980円'],
+  ['オイルマッサージ（60分）', '8,000円'],
+  ['オイルマッサージ（90分）', '12,000円'],
+];
+
+const info: [string, string][] = [
+  ['営業時間', '16:00〜21:00（最終受付 20:00）'],
+  ['ご利用定員', '1日数組限定'],
+  ['ご予約', 'ご利用日の2〜3日前までの事前予約がおすすめです。'],
+  ['場所', `${HOTEL.name}　館内`],
+];
+---
+
+<Base
+  title="ビューティー｜Esthetic Salon RICHIA"
+  description="JWORLD CO.,LTD が運営するエステサロン Esthetic Salon RICHIA。フェイシャルとボディの2系統を、一人ひとりの肌の状態に合わせたマンツーマン施術で。楽気ハウス那須の館内・要事前予約。"
+  path={pathFor('beauty')}
+  ogImage="salon/esthetic-room"
+  preloadImage={{ name: biz.hero, sizes: '100vw' }}
+  jsonLd={[
+    webSite(),
+    organization(),
+    breadcrumbs([
+      { key: 'business', name: '事業紹介' },
+      { key: 'beauty', name: 'ビューティー' },
+    ]),
+  ]}
+>
+  <PageHero
+    eyebrow="Beauty"
+    title="Esthetic Salon RICHIA"
+    lead="大人の女性のためのエステサロン。一人ひとりの肌の状態に合わせた、マンツーマンの施術を行います。"
+    image={biz.hero}
+    priority
+  />
+  <Breadcrumbs trail={['business', 'beauty']} />
+
+  {/* ============ 事業概要 ============ */}
+  <section class="section">
+    <div class="wrap-narrow">
+      <p class="eyebrow reveal">Overview</p>
+      <h2 class="section-title reveal" data-delay="1">事業概要</h2>
+      <hr class="rule reveal" data-delay="1" />
+      <p class="operator reveal" data-delay="2">
+        <span class="operator__label">運営</span>
+        <span class="operator__name">{OPERATORS.jworld.name}</span>
+      </p>
+
+      <div class="stack prose reveal" data-delay="2">
+        <p>
+          Esthetic Salon RICHIA（リチア）は、{OPERATORS.jworld.shortName}が運営するエステサロンです。{
+            COMPANY.name
+          }が運営する Resort Hotel 楽気ハウス那須の館内にあります。
+        </p>
+        <p>
+          東京・上野で多くの支持を集めたサロンが、Resort Hotel
+          楽気ハウス那須に移転オープンいたしました。
+        </p>
+        <p>
+          長年にわたり数多くのお客様の肌に向き合ってきた熟練のエステティシャンが、自然と静寂に包まれたリゾート空間で、心まで満たされる美のひとときをお届けします。
+        </p>
+        <p>
+          年齢を重ねるごとに変化する肌のお悩みに寄り添い、一人ひとりの状態に合わせたマンツーマン施術を行っています。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  {/* ============ 特徴 ============ */}
+  <section class="section section--paper">
+    <div class="wrap">
+      <p class="eyebrow reveal">Features</p>
+      <h2 class="section-title reveal" data-delay="1">RICHIA の特徴</h2>
+      <hr class="rule reveal" data-delay="1" />
+
+      <ul class="features">
+        <li class="feature reveal">
+          <p class="feature__n" aria-hidden="true">01</p>
+          <h3 class="feature__title">マンツーマンでの施術</h3>
+          <p class="feature__body">
+            お一人ずつ、同じ担当者が最初から最後まで担当します。当日の肌の状態を見ながら進めるため、施術内容をあらかじめ固定していません。
+          </p>
+        </li>
+        <li class="feature reveal" data-delay="1">
+          <p class="feature__n" aria-hidden="true">02</p>
+          <h3 class="feature__title">1日数組限定</h3>
+          <p class="feature__body">
+            時間に追われずにお過ごしいただくため、1日にご案内する組数を限っています。ご予約はご利用日の2〜3日前までがおすすめです。
+          </p>
+        </li>
+        <li class="feature reveal" data-delay="2">
+          <p class="feature__n" aria-hidden="true">03</p>
+          <h3 class="feature__title">リゾートのなかのサロン</h3>
+          <p class="feature__body">
+            那須高原のホテル館内にあります。温泉や細胞浴とあわせて、ひとつの滞在のなかで続けてご利用いただけます。
+          </p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  {/* ============ サービス内容（メニュー） ============ */}
+  <section class="section">
+    <div class="wrap">
+      <p class="eyebrow reveal">Menu</p>
+      <h2 class="section-title reveal" data-delay="1">メニュー料金</h2>
+      <hr class="rule reveal" data-delay="1" />
+
+      <div class="menus">
+        <section class="menu reveal" data-delay="2">
+          <div class="menu__media zoomable">
+            <Picture
+              name="salon/esthetic-facial"
+              sizes="(min-width: 800px) 46vw, 92vw"
+              ratio="16/9"
+            />
+          </div>
+          <h3 class="menu__title">
+            <span class="menu__en">FACIAL</span>
+            フェイシャル
+          </h3>
+          <dl class="dl">
+            {
+              facial.map(([name, price]) => (
+                <div class="dl__row">
+                  <dt>{name}</dt>
+                  <dd>{price}</dd>
+                </div>
+              ))
+            }
+          </dl>
+        </section>
+
+        <section class="menu reveal" data-delay="3">
+          <div class="menu__media zoomable">
+            <Picture
+              name="salon/esthetic-body"
+              sizes="(min-width: 800px) 46vw, 92vw"
+              ratio="16/9"
+            />
+          </div>
+          <h3 class="menu__title">
+            <span class="menu__en">BODY</span>
+            ボディ
+          </h3>
+          <dl class="dl">
+            {
+              body.map(([name, price]) => (
+                <div class="dl__row">
+                  <dt>{name}</dt>
+                  <dd>{price}</dd>
+                </div>
+              ))
+            }
+          </dl>
+        </section>
+      </div>
+
+      <ul class="notes menuNotes reveal">
+        <li>表示料金はすべて税込価格です。</li>
+        <li>掲載の内容・料金は変更となる場合があります。</li>
+      </ul>
+    </div>
+  </section>
+
+  {/* ============ ご利用案内 ============ */}
+  <section class="section section--paper">
+    <div class="wrap-narrow">
+      <p class="eyebrow reveal">Information</p>
+      <h2 class="section-title reveal" data-delay="1">ご利用案内</h2>
+      <hr class="rule reveal" data-delay="1" />
+
+      <dl class="dl infoDl reveal" data-delay="2">
+        {
+          info.map(([label, value]) => (
+            <div class="dl__row">
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+      <ul class="notes infoNotes reveal" data-delay="2">
+        <li>
+          当日のご予約も承っておりますが、空き状況やスタッフの対応状況によりお受けできない場合がございます。
+        </li>
+      </ul>
+
+      <p class="btn-row infoBtns reveal" data-delay="3">
+        <a class="btn btn--primary" href={`tel:${HOTEL.telHref}`}>
+          TEL {HOTEL.tel} でご予約
+        </a>
+      </p>
+      <p class="small muted infoTel reveal" data-delay="3">
+        受付 {HOTEL.telHours}（Resort Hotel 楽気ハウス那須）
+      </p>
+    </div>
+  </section>
+
+  {/* ============ 関連ページ ============ */}
+  <section class="section">
+    <div class="wrap">
+      <p class="eyebrow reveal">Links</p>
+      <h2 class="section-title reveal" data-delay="1">関連ページ</h2>
+      <hr class="rule reveal" data-delay="1" />
+
+      <ul class="linkCards reveal" data-delay="2">
+        <li>
+          <a class="linkCard" href={pathFor('wellness')}>
+            <span class="linkCard__label">同じ館内のサロン</span>
+            <span class="linkCard__title">細胞浴SALON 太古の甕</span>
+            <span class="linkCard__text">
+              天然鉱石「樹紋石」を敷き詰めた大きな甕による温浴サロンです。
+            </span>
+          </a>
+        </li>
+        <li>
+          <a class="linkCard" href={pathFor('hospitality')}>
+            <span class="linkCard__label">サロンのある施設</span>
+            <span class="linkCard__title">Resort Hotel 楽気ハウス那須</span>
+            <span class="linkCard__text">
+              温泉大浴場と露天風呂を備えた、那須高原のリゾートホテルです。
+            </span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <CtaBand
+    heading="エステティックについて、お気軽にご相談ください"
+    body="ご予約・施術内容については、サロンのある Resort Hotel 楽気ハウス那須へ直接お問い合わせください。Japan World株式会社へのご連絡はお問い合わせページから承ります。"
+  />
+</Base>
+
+<style>
+  .operator {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6em;
+    flex-wrap: wrap;
+    margin-top: clamp(1.75rem, 4vw, 2.25rem);
+    padding: 0.7rem 1rem;
+    background: var(--paper-2);
+    border-inline-start: 3px solid var(--gold);
+  }
+
+  .operator__label {
+    flex: none;
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    color: var(--ink-50);
+  }
+
+  .operator__label::after {
+    content: "：";
+    margin-inline-start: -0.15em;
+  }
+
+  .operator__name {
+    font-size: var(--step--1);
+    font-weight: 600;
+    color: var(--ink-70);
+  }
+
+  .prose {
+    line-height: 2.1;
+    margin-top: 1.5rem;
+  }
+
+  /* ---------------- 特徴 ---------------- */
+  .features {
+    list-style: none;
+    padding: 0;
+    margin: clamp(2rem, 5vw, 3rem) 0 0;
+    display: grid;
+    gap: clamp(1.75rem, 4vw, 2.5rem);
+  }
+
+  @media (min-width: 800px) {
+    .features {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .feature {
+    border-top: 1px solid var(--line);
+    padding-top: 1.5rem;
+  }
+
+  .feature__n {
+    font-family: var(--serif);
+    font-size: var(--step-2);
+    color: var(--gold);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.75rem;
+  }
+
+  .feature__title {
+    font-size: var(--step-2);
+  }
+
+  .feature__body {
+    margin-top: 0.9rem;
+    font-size: var(--step--1);
+    line-height: 2;
+    color: var(--ink-70);
+  }
+
+  /* ---------------- メニュー ---------------- */
+  .menus {
+    margin-top: clamp(2rem, 5vw, 3rem);
+    display: grid;
+    gap: clamp(2.25rem, 5vw, 3.5rem);
+  }
+
+  @media (min-width: 800px) {
+    .menus {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .menu__media {
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+  }
+
+  .menu__title {
+    font-size: var(--step-2);
+    display: grid;
+    gap: 0.4rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .menu__en {
+    font-family: var(--sans);
+    font-size: 0.6875rem;
+    letter-spacing: 0.24em;
+    color: var(--ai-600);
+    font-weight: 600;
+  }
+
+  .menu :global(.dl__row dd) {
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (min-width: 640px) {
+    .menu :global(.dl__row) {
+      grid-template-columns: 1fr auto;
+    }
+    .menu :global(.dl__row dd) {
+      text-align: right;
+    }
+  }
+
+  .menuNotes {
+    margin-top: 1.75rem;
+  }
+
+  /* ---------------- ご利用案内 ---------------- */
+  .infoDl {
+    margin-top: clamp(1.75rem, 4vw, 2.25rem);
+  }
+
+  .infoNotes {
+    margin-top: 1.1rem;
+  }
+
+  .infoBtns {
+    margin-top: 2rem;
+  }
+
+  .infoTel {
+    margin-top: 0.75rem;
+  }
+
+  /* ---------------- 関連ページ ---------------- */
+  .linkCards {
+    list-style: none;
+    padding: 0;
+    margin: clamp(1.75rem, 4vw, 2.5rem) 0 0;
+    display: grid;
+    gap: clamp(1rem, 2.5vw, 1.5rem);
+  }
+
+  @media (min-width: 760px) {
+    .linkCards {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .linkCard {
+    display: grid;
+    gap: 0.5rem;
+    height: 100%;
+    background: var(--white);
+    border: 1px solid var(--line-soft);
+    padding: clamp(1.25rem, 2.5vw, 1.75rem);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .linkCard:hover {
+    border-color: var(--ai-100);
+    box-shadow: var(--shadow);
+    color: inherit;
+  }
+
+  .linkCard__label {
+    font-size: 0.6875rem;
+    letter-spacing: 0.18em;
+    color: var(--ai-600);
+    font-weight: 600;
+  }
+
+  .linkCard__title {
+    font-family: var(--serif);
+    font-size: var(--step-1);
+    font-weight: 600;
+    color: var(--ai-900);
+    line-height: 1.5;
+  }
+
+  .linkCard__text {
+    font-size: var(--step--1);
+    color: var(--ink-70);
+    line-height: 1.9;
+  }
+</style>

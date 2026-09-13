@@ -1,24 +1,22 @@
 ---
+/**
+ * 全ページ共通のレイアウト。
+ *
+ * 日本語単独サイトのため hreflang / og:locale の言語分岐は持たない。
+ * （旧 /en/ /zh/ /vi/ の 36URL は worker/index.ts で日本語版へ 301 している）
+ */
 import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import {
-  SITE,
-  LANGS,
-  LANG_META,
-  COMPANY_I18N,
-  pathFor,
-  type Lang,
-  type RouteKey,
-} from '../data/site';
-import { getDict } from '../i18n';
+import { SITE, COMPANY } from '../data/site';
 import { IMAGES, type ImageName } from '../data/images.generated';
 
 interface Props {
-  lang: Lang;
-  route: RouteKey;
+  /** <title> に使う。サイト名はここで付ける */
   title: string;
   description: string;
+  /** canonical に使う絶対パス（例 /business/wellness/） */
+  path: string;
   /** OGP 画像。ページごとに変える */
   ogImage?: ImageName;
   /** LCP 画像を preload する場合の名前と sizes */
@@ -26,27 +24,23 @@ interface Props {
   /** 追加の JSON-LD */
   jsonLd?: unknown[];
   noindex?: boolean;
+  /** トップページだけ <title> にページ名を重ねない */
+  bareTitle?: boolean;
 }
 
 const {
-  lang,
-  route,
   title,
   description,
-  ogImage = 'hotel/exterior',
+  path,
+  ogImage = 'salon/kame-open',
   preloadImage,
   jsonLd = [],
   noindex = false,
+  bareTitle = false,
 } = Astro.props;
 
-const t = getDict(lang);
-const meta = LANG_META[lang];
-
-const path = pathFor(lang, route);
 const canonical = new URL(path, SITE.origin).href;
-// サイト名は言語に合わせる（現行サイトは全言語で日本語の社名だった）
-const siteName = COMPANY_I18N[lang].name;
-const fullTitle = `${title} | ${siteName}`;
+const fullTitle = bareTitle ? title : `${title} | ${COMPANY.name}`;
 
 const og = IMAGES[ogImage];
 const ogUrl = new URL(`/images/${ogImage}-${og.widths[og.widths.length - 1]}.webp`, SITE.origin).href;
@@ -63,7 +57,7 @@ const preload = preloadImage
 ---
 
 <!doctype html>
-<html lang={meta.htmlLang}>
+<html lang="ja">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -73,20 +67,9 @@ const preload = preloadImage
     <link rel="canonical" href={canonical} />
     {noindex && <meta name="robots" content="noindex, follow" />}
 
-    {
-      LANGS.map((l) => (
-        <link
-          rel="alternate"
-          hreflang={LANG_META[l].hreflang}
-          href={new URL(pathFor(l, route), SITE.origin).href}
-        />
-      ))
-    }
-    <link rel="alternate" hreflang="x-default" href={new URL(pathFor('ja', route), SITE.origin).href} />
-
-    <meta property="og:type" content={route === 'home' ? 'website' : 'article'} />
-    <meta property="og:site_name" content={siteName} />
-    <meta property="og:locale" content={meta.ogLocale} />
+    <meta property="og:type" content={path === '/' ? 'website' : 'article'} />
+    <meta property="og:site_name" content={COMPANY.name} />
+    <meta property="og:locale" content="ja_JP" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
@@ -127,11 +110,54 @@ const preload = preloadImage
   </head>
 
   <body id="top">
-    <a class="skip" href="#main">{t.ui.skipToContent}</a>
-    <Header lang={lang} t={t} current={route} />
+    <a class="skip" href="#main">本文へスキップ</a>
+    <Header path={path} />
     <main id="main">
       <slot />
     </main>
-    <Footer lang={lang} t={t} />
+    <Footer />
+
+    {/*
+      スクロールで要素を浮かび上がらせる。
+      - 外部ライブラリは使わない（IntersectionObserver のみ）
+      - prefers-reduced-motion: reduce のときは何もしない
+      - この属性が付いて初めて CSS 側が .reveal を隠すので、
+        JavaScript が無効な環境では最初から表示されたままになる
+    */}
+    <script is:inline>
+      (function () {
+        var root = document.documentElement;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (!('IntersectionObserver' in window)) return;
+
+        root.setAttribute('data-reveal', '');
+
+        var show = function (el) {
+          el.classList.add('is-visible');
+        };
+
+        var io = new IntersectionObserver(
+          function (entries) {
+            for (var i = 0; i < entries.length; i++) {
+              if (entries[i].isIntersecting) {
+                show(entries[i].target);
+                io.unobserve(entries[i].target);
+              }
+            }
+          },
+          { rootMargin: '0px 0px -8% 0px', threshold: 0.06 },
+        );
+
+        var targets = document.querySelectorAll('.reveal');
+        for (var i = 0; i < targets.length; i++) {
+          // ファーストビュー内にある要素は、待たずにすぐ出す
+          if (targets[i].getBoundingClientRect().top < window.innerHeight * 0.9) {
+            show(targets[i]);
+          } else {
+            io.observe(targets[i]);
+          }
+        }
+      })();
+    </script>
   </body>
 </html>
