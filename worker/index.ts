@@ -28,6 +28,19 @@ export interface Env {
   ASSETS: Fetcher;
 }
 
+/**
+ * インラインスクリプトの SHA-256（`npm run build` が dist/ から生成する）。
+ *
+ * ⚠ 2026-09-13 本番でスマートフォンのメニューが開かない不具合の原因。
+ *   script-src 'self' は **インラインスクリプトを一切許可しない**。
+ *   このサイトはメニューとスクロール表示の JS を HTML に埋め込んでいるため、
+ *   ハッシュを載せないとブラウザが実行を拒否する（Chrome のコンソールに
+ *   "Executing inline script violates ... script-src 'self'" が出る）。
+ *   'unsafe-inline' で逃げると CSP が骨抜きになるので、ハッシュで個別に許可する。
+ *   詳細は docs/10-csp-inline-scripts.md。
+ */
+import { CSP_SCRIPT_HASHES } from './csp-hashes.generated.ts';
+
 const CANONICAL_HOST = 'www.japanworld.co.jp';
 
 /** かつて存在した言語プレフィックス。現在はすべて日本語ページへ送る */
@@ -206,11 +219,15 @@ const SECURITY_HEADERS: Record<string, string> = {
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
   // 外部リソースを一切読み込まない静的サイトのため self に限定できる。
   // 画像のみ data: を許可（将来のインライン SVG 等に備える）。
+  //
+  // script-src: 'self' だけではインラインスクリプトが動かない（上の import の注記参照）。
+  //   ビルドごとに生成したハッシュを並べ、そのビルドの HTML に埋め込まれた
+  //   スクリプトだけを許可する。ハッシュが 0 件のときは 'self' のみ（＝インライン禁止）。
   'Content-Security-Policy': [
     "default-src 'self'",
     "img-src 'self' data:",
     "style-src 'self' 'unsafe-inline'",
-    "script-src 'self'",
+    ["script-src 'self'", ...CSP_SCRIPT_HASHES.map((h) => `'${h}'`)].join(' '),
     "font-src 'self'",
     "form-action 'self'",
     "frame-ancestors 'self'",

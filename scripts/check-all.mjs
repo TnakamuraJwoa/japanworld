@@ -17,6 +17,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { collectInlineScriptHashes, readGeneratedHashes } from './lib/csp-hashes.mjs';
 
 const DIST = 'dist';
 const ORIGIN = 'https://www.japanworld.co.jp';
@@ -542,6 +543,32 @@ for (const m of sitemap.matchAll(/<loc>([^<]+)<\/loc>\s*<lastmod>([^<]+)<\/lastm
 
 if (!seoIssues) {
   ok('robots / og:type / 見出し階層 / Organization / パンくず一致 / 社名表記 / 甲斐路の不掲載 / lastmod');
+}
+
+// ------------------------------------------------------- 13. CSP とインラインスクリプト
+//
+// Worker の script-src 'self' はインラインスクリプトを許可しない。
+// dist/ に埋め込まれたスクリプトのハッシュが worker/csp-hashes.generated.ts に
+// 揃っていないと、本番でスマートフォンのメニューが開かない（docs/10）。
+// `npm run build` が生成するので、astro build を単体で走らせたときの取り残しを拾う。
+console.log('\n[13] CSP とインラインスクリプト');
+{
+  const { hashes: want, scripts } = collectInlineScriptHashes(DIST);
+  const have = readGeneratedHashes();
+  if (have === null) {
+    fail('worker/csp-hashes.generated.ts が無い → npm run build を実行してください');
+  } else {
+    const lacking = want.filter((h) => !have.includes(h));
+    const stale = have.filter((h) => !want.includes(h));
+    for (const h of lacking) fail(`生成物に無いインラインスクリプト: ${h} → npm run build を実行`);
+    for (const h of stale) fail(`dist に存在しない古いハッシュが残っている: ${h} → npm run build を実行`);
+    if (!lacking.length && !stale.length) {
+      ok(`インラインスクリプト ${want.length} 本のハッシュが worker/csp-hashes.generated.ts と一致`);
+      for (const s of scripts) {
+        console.log(`    ${s.hash}  ${s.bytes} bytes  ${s.pages.length} ページ`);
+      }
+    }
+  }
 }
 
 // ---------------------------------------------------------------- 結果

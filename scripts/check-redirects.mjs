@@ -11,51 +11,16 @@
  *   npx wrangler dev --port 8788 --local     （別ターミナル）
  *   node --experimental-strip-types scripts/check-redirects.mjs http://127.0.0.1:8788
  */
-import fs from 'node:fs';
-import path from 'node:path';
+import { createLocalWorker } from './lib/worker-local.mjs';
+import { collectInlineScriptHashes } from './lib/csp-hashes.mjs';
 
 const BASE = process.argv[2] ?? null;
 const CANON = 'https://www.japanworld.co.jp';
 const DIST = 'dist';
 
 // ---------------------------------------------------------------------------
-// BASE 未指定なら worker を直接呼ぶ。dist/ を読む ASSETS スタブを用意する。
+// BASE 未指定なら worker を直接呼ぶ（dist/ を ASSETS として肩代わり）。
 // ---------------------------------------------------------------------------
-const MIME = {
-  '.html': 'text/html; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.xml': 'application/xml; charset=utf-8',
-  '.txt': 'text/plain; charset=utf-8',
-  '.webp': 'image/webp',
-  '.png': 'image/png',
-  '.svg': 'image/svg+xml',
-  '.pdf': 'application/pdf',
-};
-
-function assetsStub() {
-  return {
-    async fetch(request) {
-      // Workers の Fetcher.fetch は Request / URL / 文字列のいずれも受け取る
-      const href =
-        typeof request === 'string' ? request : request instanceof URL ? request.href : request.url;
-      const url = new URL(href);
-      const p = decodeURIComponent(url.pathname);
-      const candidates = p.endsWith('/') ? [p + 'index.html'] : [p, p + '/index.html', p + '.html'];
-      for (const c of candidates) {
-        const file = path.join(DIST, c);
-        if (fs.existsSync(file) && fs.statSync(file).isFile()) {
-          return new Response(fs.readFileSync(file), {
-            status: 200,
-            headers: { 'Content-Type': MIME[path.extname(file)] ?? 'application/octet-stream' },
-          });
-        }
-      }
-      return new Response('Not Found', { status: 404 });
-    },
-  };
-}
-
 let call;
 /** 絶対URLで叩く版。apex や http からの流入を再現するために使う */
 let callAbsolute;
@@ -65,10 +30,8 @@ if (BASE) {
   callAbsolute = (abs, init) =>
     fetch(BASE + new URL(abs).pathname + new URL(abs).search, { ...init, redirect: 'manual' });
 } else {
-  const mod = await import('../worker/index.ts');
-  const env = { ASSETS: assetsStub() };
-  const ctx = { waitUntil() {}, passThroughOnException() {} };
-  callAbsolute = (abs, init) => mod.default.fetch(new Request(abs, init), env, ctx);
+  const worker = await createLocalWorker(DIST);
+  callAbsolute = (abs, init) => worker.fetch(abs, init);
   call = (url, init) => callAbsolute(CANON + url, init);
 }
 
@@ -285,6 +248,24 @@ for (const h of WANT) {
   }
 }
 console.log(`  Cache-Control: ${head.headers.get('cache-control')}`);
+
+// CSP の script-src に、dist のインラインスクリプトのハッシュがすべて載っていること。
+// 1 つでも欠けると、そのスクリプト（メニュー・スクロール表示）がブラウザで動かない。
+{
+  const csp = head.headers.get('content-security-policy') ?? '';
+  const scriptSrc = (csp.match(/script-src([^;]*)/) ?? [, ''])[1];
+  const { hashes } = collectInlineScriptHashes(DIST);
+  const lacking = hashes.filter((h) => !scriptSrc.includes(`'${h}'`));
+  if (hashes.length === 0) {
+    console.log('  ! dist にインラインスクリプトが見つからない（検査対象なし）');
+  } else if (lacking.length) {
+    for (const h of lacking) console.log(`  ✗ script-src にハッシュが無い: ${h}`);
+    console.log('    → npm run build を実行して worker/csp-hashes.generated.ts を更新してください');
+    hdrFail += lacking.length;
+  } else {
+    console.log(`  ✓ script-src に dist のインラインスクリプト ${hashes.length} 本のハッシュあり`);
+  }
+}
 
 const img = await call('/images/hotel/exterior-1024.webp');
 console.log(`  画像の Cache-Control: ${img.headers.get('cache-control')}`);

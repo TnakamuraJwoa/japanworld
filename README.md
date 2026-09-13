@@ -4,7 +4,8 @@ Japan World株式会社のコーポレートサイト。
 
 - 本番想定 URL: `https://www.japanworld.co.jp/`
 - **日本語のみ / 9ページ + お知らせ詳細 + 404**
-- ランタイム JavaScript: **約 1KB**（モバイルメニューとスクロール表示のインライン2ブロックのみ。外部ファイル0）
+- ランタイム JavaScript: **約 2KB**（モバイルメニューとスクロール表示のインライン2ブロックのみ。外部ファイル0）
+  - インラインのため、CSP には **ビルド時に生成した SHA-256 ハッシュ**を載せている（`worker/csp-hashes.generated.ts`、`docs/10`）
 
 > **2026-09-13 コーポレートサイトへ全面改修。**
 > それ以前は「楽気ハウス那須」のホテル紹介が中心で、4言語 48URL の構成でした。
@@ -35,14 +36,15 @@ $env:PATH = "C:\Program Files\nodejs;$env:PATH"      # PowerShell
 | コマンド | 内容 |
 |---|---|
 | `npm run dev` | 開発サーバー（Astro） |
-| `npm run build` | `dist/` へ静的ビルド |
+| `npm run build` | `dist/` へ静的ビルド＋インラインスクリプトの CSP ハッシュを `worker/csp-hashes.generated.ts` に生成 |
+| `npm run csp` | ハッシュ生成だけをやり直す（通常は `build` に含まれる） |
 | `npm run preview` | `wrangler dev` で Worker ごと確認 |
 | `npm run check` | 型チェック（`astro check`） |
 | `npm run images` | `assets/source/` から `public/images/` の WebP を再生成 |
-| `npm run verify` | ビルド成果物の検証（SEO・alt・リンク・Wix依存・sitemap ほか） |
+| `npm run verify` | ビルド成果物の検証（SEO・alt・リンク・Wix依存・sitemap・CSP ハッシュ ほか） |
 | `npm run verify:redirects` | 旧URLのリダイレクト 172 ケース + チェーン検査 |
 | `npm run verify:overflow` | 8つの画面幅で横スクロールが起きていないか検証（Chrome / Edge が必要） |
-| `npm run verify:nav` | スマホ幅でハンバーガーメニューが開閉・タップできるか検証（Chrome / Edge が必要） |
+| `npm run verify:nav` | スマホ幅でハンバーガーメニューが開閉・タップできるか検証（Chrome / Edge が必要）。**Worker を通して本番と同じ CSP 付きで検査する** |
 | `npm run shots` | 全ページのスクリーンショットを撮る（Chrome / Edge が必要） |
 | `npm run deploy` | **本番デプロイ。ユーザーが実行するものです** |
 
@@ -189,6 +191,7 @@ npx wrangler deploy
 | **[docs/07-corporate-renewal.md](docs/07-corporate-renewal.md)** | **★ コーポレートサイト改修の決定事項と要確認事項** |
 | **[docs/08-seo-audit.md](docs/08-seo-audit.md)** | **★ SEO 監査と改修（旧URLの扱い・title/description・構造化データ・検証結果）** |
 | [docs/09-rakinasu-kaiji-ticket.md](docs/09-rakinasu-kaiji-ticket.md) | rakinasu.com（別サイト・Wix）の旧甲斐路チケット案内の統合手順。**未適用の原稿** |
+| [docs/10-csp-inline-scripts.md](docs/10-csp-inline-scripts.md) | 本番でスマホのメニューが開かなかった件（CSP がインラインスクリプトを遮断）の原因・修正・再発防止 |
 
 ⚠ docs/01〜02 はホテル中心だった前構成を前提に書かれています。
 サイト構成は docs/07、URL の対応表は docs/03、SEO は docs/08 が正です。
@@ -207,6 +210,8 @@ npx wrangler deploy
 - **失効した証明書へ利用者を誘導しない。** NFT導線は `FEATURES.nftLink` で無効化中（docs/04 要確認 #6）
 - **健康表現を追加・強化しない。** `docs/05-health-content-review.md` 参照
 - **Webフォント・外部スクリプトを読み込まない。** CSP を `default-src 'self'` に保てる
+- **インラインスクリプトは CSP のハッシュで許可する。`'unsafe-inline'` は使わない。**
+  `npm run build` がハッシュを生成するので、JS を変えたら必ず `build` を通してからデプロイする（`docs/10`）
 - **旧URLを捨てない。ただし何でもトップへ飛ばさない。** 対応する新ページがあるものだけ 301、
   無いものは 404/410（`docs/08-seo-audit.md` §4）。172ケース + チェーン検査で検証する
 - **アニメーションのためにライブラリを足さない。** CSS と IntersectionObserver 約20行のみ。
