@@ -59,8 +59,10 @@ ${hashes.map((h) => `  '${h}',`).join('\n')}
 `;
 
 const before = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8') : '';
-// 生成日時の行以外が同じなら書き換えない（無意味な差分を作らない）
-const strip = (s) => s.replace(/^ \* 生成日時: .*$/m, '');
+// 生成日時の行以外が同じなら書き換えない（ビルドのたびに差分が出るのを防ぐ）。
+// ⚠ 改行も揃えてから比べる。このリポジトリは core.autocrlf が有効で、
+//   チェックアウト時に CRLF になるため、LF のまま比較すると毎回「違う」と判定される。
+const strip = (s) => s.replace(/\r\n/g, '\n').replace(/^ \* 生成日時: .*$/m, '');
 if (strip(before) !== strip(body)) {
   fs.writeFileSync(OUT, body);
   console.log(`${OUT} を更新しました（${hashes.length} 件）`);
