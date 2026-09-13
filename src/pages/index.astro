@@ -161,8 +161,18 @@ const values = [
             INHOUSE_SALONS.map((b) => (
               <li>
                 <a class="inhouse__link" href={pathFor(b.key)}>
-                  <span class="inhouse__name">{b.title}</span>
-                  <span class="inhouse__lead">{b.lead}</span>
+                  <span class="inhouse__media zoomable">
+                    <Picture
+                      name={b.image}
+                      sizes="(min-width: 700px) 148px, 30vw"
+                      ratio="4/3"
+                      alt=""
+                    />
+                  </span>
+                  <span class="inhouse__body">
+                    <span class="inhouse__name">{b.title}</span>
+                    <span class="inhouse__lead">{b.lead}</span>
+                  </span>
                 </a>
               </li>
             ))
@@ -504,15 +514,25 @@ const values = [
 
   .inhouse__link {
     display: grid;
-    gap: 0.25rem;
+    grid-template-columns: clamp(104px, 30vw, 148px) 1fr;
     background: var(--white);
     border: 1px solid var(--line-soft);
-    padding: 1rem 1.25rem;
+    overflow: hidden;
     min-height: 48px;
-    align-content: center;
     text-decoration: none;
     color: inherit;
     transition: border-color 0.18s ease;
+  }
+
+  .inhouse__media {
+    display: block;
+  }
+
+  .inhouse__body {
+    display: grid;
+    gap: 0.25rem;
+    align-content: center;
+    padding: 1rem 1.25rem;
   }
 
   .inhouse__link:hover {
