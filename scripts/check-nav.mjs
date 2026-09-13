@@ -15,11 +15,14 @@ const BASE = process.argv[2] ?? preview.base;
 // 第2段ナビのある事業ページも含める（ヘッダーが 2 段になる）
 const PAGES = ['/', '/business/wellness/', '/news/', '/contact/'];
 const WIDTHS = [320, 390, 414, 768];
+/** メニューを開く前に、この位置までスクロールしておく */
+const SCROLLS = [0, 1200];
 
 const CHROME =
   process.env.CHROME_PATH ?? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 
-const PORT = 19335;
+// 固定ポートだと、前回の異常終了で残った Chrome に繋いでしまい黙って固まる
+const PORT = 19000 + Math.floor(Math.random() * 900);
 const profile = mkdtempSync(join(tmpdir(), 'nav-'));
 
 const chrome = spawn(
@@ -36,6 +39,25 @@ const chrome = spawn(
   ],
   { stdio: 'ignore' }
 );
+
+// 途中で落ちても Chrome とプレビューを残さない（残すと次の実行が壊れる）
+let cleanedUp = false;
+const cleanup = () => {
+  if (cleanedUp) return;
+  cleanedUp = true;
+  try {
+    chrome.kill();
+  } catch {}
+};
+process.on('exit', cleanup);
+for (const ev of ['uncaughtException', 'unhandledRejection']) {
+  process.on(ev, async (err) => {
+    console.error(err);
+    cleanup();
+    await preview.close().catch(() => {});
+    process.exit(1);
+  });
+}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -90,22 +112,25 @@ const evaluate = async (expression) => {
   return result.value;
 };
 
-/** ハンバーガーの中心を実際にタップする */
+/**
+ * ハンバーガーの中心を実際にタップする。
+ * 実機と同じ touchStart → touchEnd で押す（マウスでは拾えない不具合があるため）。
+ */
 async function tapToggle() {
   const at = await evaluate(`(() => {
     const b = document.querySelector('[data-nav-toggle]');
     if (!b) return null;
     const r = b.getBoundingClientRect();
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) };
   })()`);
   if (!at) throw new Error('[data-nav-toggle] が見つかりません');
-  for (const type of ['mousePressed', 'mouseReleased']) {
-    await send(
-      'Input.dispatchMouseEvent',
-      { type, x: at.x, y: at.y, button: 'left', clickCount: 1 },
-      sessionId
-    );
-  }
+  if (at.y < 0) throw new Error(`ハンバーガーが画面外にある (y=${at.y})`);
+  await send(
+    'Input.dispatchTouchEvent',
+    { type: 'touchStart', touchPoints: [{ x: at.x, y: at.y }] },
+    sessionId
+  );
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }, sessionId);
   await sleep(350);
 }
 
@@ -129,6 +154,10 @@ const PROBE_OPEN = `(() => {
     return hit === a || a.contains(hit);
   }).length;
 
+  // 閉じるために、開いている間もハンバーガー自身が画面内で押せること
+  const hr = toggle.getBoundingClientRect();
+  const hitToggle = document.elementFromPoint(hr.left + hr.width / 2, hr.top + hr.height / 2);
+
   return {
     vw,
     vh,
@@ -139,6 +168,10 @@ const PROBE_OPEN = `(() => {
     rect: { top: Math.round(r.top), left: Math.round(r.left), width: Math.round(r.width), height: Math.round(r.height) },
     links: links.length,
     tappable,
+    headerTop: Math.round(document.querySelector('.site-header').getBoundingClientRect().top),
+    headerH: Math.round(document.querySelector('.site-header').getBoundingClientRect().height),
+    toggleTop: Math.round(hr.top),
+    toggleTappable: hitToggle === toggle || toggle.contains(hitToggle),
   };
 })()`;
 
@@ -161,6 +194,87 @@ const fail = (msg) => {
   console.log(`    ✗ ${msg}`);
 };
 
+/**
+ * 表示中のページについて、開く・閉じる一連の動きを検査する。
+ * scrollBefore はメニューを開く前のスクロール位置。
+ */
+async function checkOneCase(label, scrollBefore) {
+  // 1. 初期状態は閉じている
+  const closed0 = await evaluate(PROBE_CLOSED);
+  if (!closed0.toggleShown) fail(`${label}: ハンバーガーが表示されていない`);
+  if (closed0.shown) fail(`${label}: 初期状態でメニューが開いている`);
+
+  // 2. タップで開く
+  await tapToggle();
+  const open = await evaluate(PROBE_OPEN);
+  if (open.expanded !== 'true') fail(`${label}: aria-expanded が ${open.expanded}`);
+  if (open.display === 'none' || open.visibility === 'hidden' || open.opacity === 0) {
+    fail(
+      `${label}: パネルが非表示 ` +
+        `(display=${open.display} visibility=${open.visibility} opacity=${open.opacity})`
+    );
+  }
+  if (open.rect.height < 240) {
+    fail(
+      `${label}: パネルの高さが ${open.rect.height}px しかない` +
+        `（top=${open.rect.top} 画面高 ${open.vh}px）`
+    );
+  }
+  if (open.rect.width < open.vw - 1) {
+    fail(`${label}: パネル幅 ${open.rect.width}px が画面幅 ${open.vw}px に足りない`);
+  }
+  if (open.tappable < open.links) {
+    fail(`${label}: タップできるリンクが ${open.tappable}/${open.links} 本`);
+  }
+  // ヘッダーが画面外へ逃げると、閉じるための × ごと消えてしまう
+  if (open.headerTop !== 0) {
+    fail(`${label}: 開いた瞬間にヘッダーが top=${open.headerTop}px へ動いた`);
+  }
+  if (!open.toggleTappable) {
+    fail(`${label}: 開いている間にハンバーガーが押せない (top=${open.toggleTop}px)`);
+  }
+  // パネルの上端はヘッダーの下端に隙間なく続くこと
+  if (Math.abs(open.rect.top - open.headerH) > 1) {
+    fail(`${label}: パネル上端 ${open.rect.top}px とヘッダー下端 ${open.headerH}px がずれている`);
+  }
+
+  // 3. スクロールが背面に抜けないか
+  const locked = await evaluate(`(() => {
+    const y0 = window.scrollY;
+    window.scrollBy(0, 400);
+    const moved = window.scrollY !== y0;
+    window.scrollTo(0, y0);
+    return !moved;
+  })()`);
+  if (!locked) fail(`${label}: メニューを開いても背面がスクロールする`);
+
+  // 4. もう一度タップで閉じる
+  await tapToggle();
+  const closed1 = await evaluate(PROBE_CLOSED);
+  if (closed1.expanded !== 'false') fail(`${label}: 閉じても aria-expanded が ${closed1.expanded}`);
+  if (closed1.shown) fail(`${label}: 2回目のタップで閉じない`);
+  if (closed1.bodyScrollLocked) fail(`${label}: 閉じたのに body のスクロールが固定されたまま`);
+
+  // 閉じたら、開く前に読んでいた位置へ戻っていること
+  const scrollAfter = await evaluate('Math.round(window.scrollY)');
+  if (Math.abs(scrollAfter - scrollBefore) > 1) {
+    fail(`${label}: 閉じたらスクロール位置が ${scrollBefore}px から ${scrollAfter}px へ動いた`);
+  }
+
+  // 5. Escape で閉じる
+  await tapToggle();
+  for (const type of ['keyDown', 'keyUp']) {
+    await send(
+      'Input.dispatchKeyEvent',
+      { type, key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 },
+      sessionId
+    );
+  }
+  await sleep(300);
+  const closed2 = await evaluate(PROBE_CLOSED);
+  if (closed2.shown) fail(`${label}: Escape で閉じない`);
+}
+
 console.log(`\nスマホ版メニュー検査  base=${BASE}\n${'='.repeat(70)}`);
 
 for (const width of WIDTHS) {
@@ -172,62 +286,30 @@ for (const width of WIDTHS) {
   await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 }, sessionId);
 
   for (const page of PAGES) {
-    await send('Page.navigate', { url: BASE + page }, sessionId);
-    await sleep(500);
-    const label = `幅 ${String(width).padStart(3)}px ${page}`;
-    const before = problems;
+    // 実際の利用では、少し読み進めてからメニューを開くことが多い。
+    // 下までスクロールした状態も必ず見る（sticky なヘッダーが絡む）
+    for (const scrollFirst of SCROLLS) {
+      await send('Page.navigate', { url: BASE + page }, sessionId);
+      await sleep(500);
+      if (scrollFirst) {
+        await evaluate(`window.scrollTo({ top: ${scrollFirst}, behavior: 'instant' })`);
+        await sleep(250);
+      }
+      const label =
+        `幅 ${String(width).padStart(3)}px ${page.padEnd(22)}` +
+        (scrollFirst ? `${scrollFirst}px スクロール後` : '先頭');
+      const before = problems;
+      const scrollBefore = await evaluate('Math.round(window.scrollY)');
 
-    // 1. 初期状態は閉じている
-    const closed0 = await evaluate(PROBE_CLOSED);
-    if (!closed0.toggleShown) fail(`${label}: ハンバーガーが表示されていない`);
-    if (closed0.shown) fail(`${label}: 初期状態でメニューが開いている`);
+      try {
+        await checkOneCase(label, scrollBefore);
+      } catch (err) {
+        // ここで落ちても残りの幅・ページは見たいので、1件の失敗として続ける
+        fail(`${label}: ${err.message}`);
+      }
 
-    // 2. タップで開く
-    await tapToggle();
-    const open = await evaluate(PROBE_OPEN);
-    if (open.expanded !== 'true') fail(`${label}: aria-expanded が ${open.expanded}`);
-    if (open.display === 'none' || open.visibility === 'hidden' || open.opacity === 0) {
-      fail(`${label}: パネルが非表示 (display=${open.display} visibility=${open.visibility} opacity=${open.opacity})`);
+      if (problems === before) console.log(`✓ ${label}`);
     }
-    if (open.rect.height < 240) {
-      fail(
-        `${label}: パネルの高さが ${open.rect.height}px しかない` +
-          `（top=${open.rect.top} 画面高 ${open.vh}px）`
-      );
-    }
-    if (open.rect.width < open.vw - 1) {
-      fail(`${label}: パネル幅 ${open.rect.width}px が画面幅 ${open.vw}px に足りない`);
-    }
-    if (open.tappable < open.links) {
-      fail(`${label}: タップできるリンクが ${open.tappable}/${open.links} 本`);
-    }
-
-    // 3. スクロールが背面に抜けないか
-    const locked = await evaluate(`(() => {
-      const y0 = window.scrollY;
-      window.scrollBy(0, 400);
-      const moved = window.scrollY !== y0;
-      window.scrollTo(0, y0);
-      return !moved;
-    })()`);
-    if (!locked) fail(`${label}: メニューを開いても背面がスクロールする`);
-
-    // 4. もう一度タップで閉じる
-    await tapToggle();
-    const closed1 = await evaluate(PROBE_CLOSED);
-    if (closed1.expanded !== 'false') fail(`${label}: 閉じても aria-expanded が ${closed1.expanded}`);
-    if (closed1.shown) fail(`${label}: 2回目のタップで閉じない`);
-    if (closed1.bodyScrollLocked) fail(`${label}: 閉じたのに body のスクロールが固定されたまま`);
-
-    // 5. Escape で閉じる
-    await tapToggle();
-    await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 }, sessionId);
-    await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 }, sessionId);
-    await sleep(300);
-    const closed2 = await evaluate(PROBE_CLOSED);
-    if (closed2.shown) fail(`${label}: Escape で閉じない`);
-
-    if (problems === before) console.log(`✓ ${label}`);
   }
 }
 
@@ -246,6 +328,14 @@ if (!desktop.shown) fail('幅 1280px: PC 幅でナビが表示されていない
 if (problems === 0) console.log('✓ 幅 1280px /            PC 幅はハンバーガーなし・ナビ常時表示');
 
 console.log('='.repeat(70));
+
+// 参照先が見つからなかったファイルがあれば、それも報告する
+const missing = [...new Set(preview.missing)];
+if (missing.length) {
+  console.log(`\n配信できなかった参照 ${missing.length} 件:`);
+  for (const m of missing) console.log(`    - ${m}`);
+}
+
 console.log(problems === 0 ? '\n✓ スマホ版メニューは正常に開閉します\n' : `\n✗ ${problems} 件\n`);
 
 ws.close();

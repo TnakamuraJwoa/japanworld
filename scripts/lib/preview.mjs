@@ -18,8 +18,11 @@ const MIME = {
   '.pdf': 'application/pdf',
 };
 
-/** dist/ を配信して { base, close } を返す */
+/** dist/ を配信して { base, missing, close } を返す */
 export async function servePreview(dist = 'dist', port = 0) {
+  /** 配信できなかったパス。検査側から参照する */
+  const missing = [];
+
   const server = http.createServer((req, res) => {
     const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
     const candidates = p.endsWith('/') ? [p + 'index.html'] : [p, p + '/index.html'];
@@ -32,14 +35,18 @@ export async function servePreview(dist = 'dist', port = 0) {
         return res.end(fs.readFileSync(file));
       }
     }
+    // 参照先が無いこと自体が不具合なので、黙って隠さず記録する
+    missing.push(p);
+    const notFound = path.join(dist, '404.html');
     res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end(fs.readFileSync(path.join(dist, '404.html')));
+    res.end(fs.existsSync(notFound) ? fs.readFileSync(notFound) : 'Not Found');
   });
 
   await new Promise((resolve) => server.listen(port, '127.0.0.1', resolve));
   const { port: actual } = server.address();
   return {
     base: `http://127.0.0.1:${actual}`,
+    missing,
     close: () => new Promise((r) => server.close(r)),
   };
 }

@@ -347,8 +347,25 @@ function inSection(key: RouteKey): boolean {
     overflow: hidden;
   }
 
+  /* 背面を止めるために html へ overflow: hidden を掛けると、
+     その間だけ position: sticky が効かなくなる（張り付く先のスクロール容器が無くなるため）。
+     ページを下までスクロールした状態で開くと、ヘッダーが文書の先頭＝画面の外へ戻ってしまい、
+     閉じるための × ボタンごと消えて「メニューが開かない」ように見える。
+     開いている間は fixed で画面上端に留める。 */
+  :global(html.is-nav-open) .site-header {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+  }
+
   /* ---------------- ナビ（PC） ---------------- */
   @media (min-width: 1000px) {
+    /* PC 幅ではドロワーを使わないので、上の固定は解除しておく */
+    :global(html.is-nav-open) .site-header {
+      position: sticky;
+    }
+
     .navToggle {
       display: none;
     }
@@ -471,13 +488,27 @@ function inSection(key: RouteKey): boolean {
 
     const isOpen = () => toggle.getAttribute('aria-expanded') === 'true';
 
+    /** 開く直前のスクロール位置。閉じたときにここへ戻す */
+    let scrollYBeforeOpen = 0;
+
     const setOpen = (open: boolean) => {
-      if (open) syncHeaderHeight();
+      // 変化がないときは何もしない（閉じている状態でさらに閉じると位置を戻してしまう）
+      if (open === isOpen()) return;
+
+      if (open) {
+        scrollYBeforeOpen = window.scrollY;
+        syncHeaderHeight();
+      }
+
       toggle.setAttribute('aria-expanded', String(open));
       nav.toggleAttribute('data-open', open);
       // 背面のスクロール固定は html 側で行う。
       // body だけに overflow を掛けてもスクロールするのはドキュメント要素のため止まらない。
       document.documentElement.classList.toggle('is-nav-open', open);
+
+      // 開いている間はヘッダーが fixed になり、その分だけ本文が短くなる。
+      // スクロール位置が末尾付近だとブラウザに切り詰められるため、閉じたら戻す。
+      if (!open) window.scrollTo({ top: scrollYBeforeOpen, behavior: 'instant' });
     };
 
     toggle.addEventListener('click', () => {
