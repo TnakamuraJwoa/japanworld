@@ -142,7 +142,7 @@ export const EXTERNAL = {
   members: 'https://jwcc.japanworld.co.jp/',
   /** 細胞浴SALON 太古の甕 の公式サイト（運営: JWORLD CO.,LTD） */
   saibouyoku: 'https://www.saibouyoku.com/',
-  /** JW NFT Platform ⚠ 2026-08-31 に TLS 証明書が失効。docs/04 参照 */
+  /** JW NFT Platform（楽気ハウスNFT宿泊券）。証明書の経緯は FEATURES.nftLink と docs/04 参照 */
   nft: 'https://nft.japanworld.co.jp/',
 } as const;
 
@@ -152,14 +152,21 @@ export const EXTERNAL = {
  * `nftLink`
  *   JW NFT Platform（nft.japanworld.co.jp）への導線を出すかどうか。
  *
- *   ⚠ 2026-09-13 時点で nft.japanworld.co.jp の TLS 証明書が失効しています
- *     （*.japanworld.co.jp / DigiCert RapidSSL / notAfter 2026-08-31）。
- *     このままリンクするとブラウザのセキュリティ警告へ利用者を誘導することになるため、
- *     false にして全ページから導線を外しています。
- *     証明書を更新したら、この 1 行を true に戻すだけで復旧します。
+ *   2026-09-13 時点では TLS 証明書（*.japanworld.co.jp / DigiCert RapidSSL /
+ *   notAfter 2026-08-31）が失効しており、リンクするとブラウザのセキュリティ警告へ
+ *   利用者を誘導してしまうため false にして全ページから導線を外していました。
+ *
+ *   2026-09-14 に証明書の更新を確認したため true に戻しています。
+ *     CN=japanworld.co.jp / Let's Encrypt YE1 / notAfter 2026-12-11
+ *   次回の更新期限は 2026-12-11。失効が再発したら false に戻すだけで下記が一括で消えます。
+ *
+ *   影響範囲:
+ *     - フッター「関連サイト」の JW NFT Platform（全ページ）
+ *     - 宿泊のご予約の導線カード「NFT宿泊券をお持ちの方」（事業紹介ホスピタリティ #booking）
+ *     - 会社情報「関連サイト」カード
  */
 export const FEATURES = {
-  nftLink: false,
+  nftLink: true,
 } as const;
 
 /** 現行サイトからそのまま引き継ぐ PDF */

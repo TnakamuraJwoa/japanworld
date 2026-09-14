@@ -17,7 +17,7 @@ import Picture from '../../components/Picture.astro';
 import PageHero from '../../components/PageHero.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import CtaBand from '../../components/CtaBand.astro';
-import { HOTEL, COMPANY, EXTERNAL, BOOKING_MANUAL, pathFor } from '../../data/site';
+import { HOTEL, COMPANY, EXTERNAL, FEATURES, BOOKING_MANUAL, pathFor } from '../../data/site';
 import { getBusiness } from '../../data/business';
 import { organization, webSite, lodgingBusiness, breadcrumbs } from '../../data/jsonld';
 
@@ -209,7 +209,7 @@ const membership: [string, string][] = [
       <h2 class="section-title reveal" data-delay="1">宿泊のご予約</h2>
       <hr class="rule reveal" data-delay="1" />
 
-      <ul class="routes">
+      <ul class:list={['routes', FEATURES.nftLink && 'routes--triple']}>
         <li class="route reveal" data-delay="1">
           <p class="route__label">一般のお客様</p>
           <h3 class="route__title">宿泊予約サイトから</h3>
@@ -244,6 +244,28 @@ const membership: [string, string][] = [
             <a href={BOOKING_MANUAL.href}>宿泊予約マニュアル（PDF・約1.2MB）</a>
           </p>
         </li>
+
+        {/* NFT宿泊券の導線。証明書失効時に一括で伏せられるよう FEATURES.nftLink で出し分ける */}
+        {
+          FEATURES.nftLink && (
+            <li class="route reveal" data-delay="3">
+              <p class="route__label">NFT宿泊券をお持ちの方</p>
+              <h3 class="route__title">JW NFT Platform</h3>
+              <p class="route__body">
+                NFT宿泊券でのご予約はFAXで承っています。お手持ちの宿泊券のご確認は JW NFT
+                Platform から、お手続きの詳細はホテルまでお問い合わせください。
+              </p>
+              <p class="btn-row">
+                <a class="btn btn--ghost ext" href={EXTERNAL.nft} target="_blank" rel="noopener">
+                  JW NFT Platform を開く
+                </a>
+              </p>
+              <p class="route__tel">
+                お問い合わせ　<a href={`tel:${HOTEL.telHref}`}>{HOTEL.tel}</a>（受付 {HOTEL.telHours}）
+              </p>
+            </li>
+          )
+        }
       </ul>
     </div>
   </section>
@@ -388,6 +410,22 @@ const membership: [string, string][] = [
     .routes {
       grid-template-columns: repeat(2, 1fr);
     }
+
+    /* NFT導線を出すと3枚になる。2列のあいだは3枚目が半端に余るので横いっぱいに伸ばす */
+    .routes--triple .route:nth-child(3) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* 3枚を無理なく横に並べられる幅から3列にする */
+  @media (min-width: 1100px) {
+    .routes--triple {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .routes--triple .route:nth-child(3) {
+      grid-column: auto;
+    }
   }
 
   .route {
@@ -402,6 +440,10 @@ const membership: [string, string][] = [
 
   .route:nth-child(2) {
     border-top-color: var(--gold);
+  }
+
+  .route:nth-child(3) {
+    border-top-color: var(--ai-500);
   }
 
   .route__label {

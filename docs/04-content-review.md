@@ -201,45 +201,38 @@
 しかし **FAX番号はサイトのどこにも記載されていません**。
 japanworld.co.jp / rakinasu.com / jwcc.japanworld.co.jp のいずれにもありません。
 
-### ⚠ nft.japanworld.co.jp の TLS 証明書が失効しています
+### ✅ nft.japanworld.co.jp の TLS 証明書は更新されました（2026-09-14 確認）
+
+証明書が失効していた期間は、NFT導線を全ページから非表示にしていました。
 
 ```
 nft.japanworld.co.jp
-  subject : CN=*.japanworld.co.jp
-  issuer  : DigiCert / RapidSSL TLS RSA CA G1
-  notAfter: 2026-08-31 23:59:59 GMT   ← 失効済み（2026-09-11 時点で未更新）
+  以前  : CN=*.japanworld.co.jp / DigiCert RapidSSL TLS RSA CA G1
+          notAfter 2026-08-31 23:59:59 GMT  ← 失効（2026-09-13 時点で未更新）
+  現在  : CN=japanworld.co.jp / Let's Encrypt YE1
+          notBefore 2026-09-12 / notAfter 2026-12-11  ← 有効
 ```
 
-この URL を開くと、**すべてのブラウザでセキュリティ警告**が出ます。
-現行 Wix サイトは全48ページのヘッダーからここへリンクしているため、
-**NFT宿泊券をお持ちのお客様は全員この警告に遭遇している**状態です。
+失効中はこの URL を開くと全ブラウザでセキュリティ警告が出るため、
+**NFT宿泊券をお持ちのお客様が警告に遭遇する**状態でした。
+証明書の更新を確認したので、`src/data/site.ts` の `FEATURES.nftLink` を `true` に戻し、
+導線を復旧しています。
 
-### 新サイトでの扱い（2026-09-11 公開前修正で変更）
-
-**NFT導線を全ページから非表示にしました。生成HTMLに nft.japanworld.co.jp へのリンクは 0 件です。**
-
-非表示にした箇所:
-
-| 箇所 | 以前 | 現在 |
+| 箇所 | ページ数 | 状態 |
 |---|---|---|
-| フッター「関連サイト」の JW NFT Platform | 全49ページ | 非表示 |
-| 予約導線カード「NFT宿泊券をお持ちの方」 | トップ・宿泊予約ページ 計8ページ | 非表示（一般／会員の**2導線**に再配置） |
-| 会社概要「関連サイト」カード | 4ページ | 非表示 |
+| フッター「関連サイト」の JW NFT Platform | 全10ページ | 復旧 |
+| 宿泊のご予約の導線カード「NFT宿泊券をお持ちの方」 | 事業紹介ホスピタリティ `#booking` | 復旧（一般／会員／NFT の**3導線**） |
+| 会社情報「関連サイト」カード | 会社情報 | 復旧 |
 
-**復旧方法**：`src/data/site.ts` の
+**次回の更新期限は 2026-12-11 です。** 失効が再発したら `src/data/site.ts` の
 
 ```ts
 export const FEATURES = {
-  nftLink: false,   // ← true に戻すだけで全箇所が復活します
+  nftLink: true,   // ← false にするだけで全箇所が一括で消えます
 } as const;
 ```
 
-を `true` にするだけです。文言（`t.booking.nftTitle` / `nftBody` / `nftCta`、
-`t.footer.nftLabel`、`pages.company.group` の nft 項目）と `EXTERNAL.nft` は
-4言語ぶんすべて残してあります。
-
-**証明書を更新したうえで `nftLink: true` に戻してください。**
-（jwcc は Let's Encrypt で 2026-11-01 まで、www は Google Trust Services で 2026-11-02 まで有効です）
+を `false` にすれば、上記3箇所の導線がまとめて消えます（文言と `EXTERNAL.nft` は残ります）。
 
 ### FAX番号について（2026-09-11 更新 — ホテルのFAX番号は判明）
 
@@ -251,7 +244,10 @@ export const FEATURES = {
 
 ただし **これが「NFT宿泊券の予約を受け付けるFAX番号」かどうかは確認できていません。**
 ホテル代表のFAXと、NFT宿泊券の予約窓口が同じ番号かどうかをご確認ください。
-同じであれば `booking.nftBody`（4言語）に番号を追記できます。
+同じであれば、復旧したNFT導線カードの本文
+（`src/pages/business/hospitality.astro` の `.route__body`）に番号を追記できます。
+確認が取れるまでは、番号を書かず「お手続きの詳細はホテルまでお問い合わせください」
+としてホテル代表番号へ誘導しています。
 
 ---
 
